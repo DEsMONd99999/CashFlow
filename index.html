@@ -7,20 +7,26 @@
 <title>Cashflow Helper</title>
 <style>
 :root{--c1:#4a90e2;--c2:#fff;--c3:#eee}
- html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",sans-serif;background:#f8f8f8;height:100%;scroll-behavior:smooth;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",sans-serif;background:#f8f8f8;height:100%;scroll-behavior:smooth;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
 nav{display:none;background:var(--c3);box-shadow:0 1px 3px rgba(0,0,0,.2);position:fixed;top:0;left:0;right:0;z-index:1000;padding-top:env(safe-area-inset-top);
 overflow-x:auto;
 -webkit-overflow-scrolling:touch;
 }
-nav button{flex:1 0 auto;padding:13px 2px;border:none;background:transparentВскрытом состоянии;font-size:14px;cursor:pointer;min-width:70px;}nav button.active{background:var(--c1);color:#fff}
+nav button{flex:1 0 auto;padding:13px 2px;border:none;background:transparent;font-size:14px;cursor:pointer;min-width:70px;}nav button.active{background:var(--c1);color:#fff}
 section{display:none;padding:18px;overflow-y:auto;max-height:calc(100dvh - 96px);margin-top:0}section.active{display:block;animation:fade .2s ease-out}
 @keyframes fade{from{opacity:.3;transform:translateY(4px)}to{opacity:1;transform:none}}
 table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
 th,td{border:1px solid #ccc;padding:6px;text-align:center}
 input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",sans-serif}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.row>div{flex:1 1 auto;min-width:0}
+.partner-money{flex-direction:column !important;align-items:stretch !important;gap:8px !important;margin-bottom:12px !important}
 .row>div{flex:1 1 120px;min-width:90px}
+.partner-money>div{margin:0 !important}
+.partner-money select,.partner-money input,.partner-money button{margin:0 !important}
 .btn{background:var(--c1);color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:16px}
+/* Убираем синюю обводку при фокусе на кнопках (в т.ч. кнопках %): */
+button:focus,button:focus-visible,.btn:focus,.btn:focus-visible{outline:none !important;box-shadow:none !important}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 16px;border-radius:6px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999}.toast.show{opacity:1}
 /* Полноэкранное модальное окно */
 #fullscreenTurnModal {
@@ -56,8 +62,14 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
   margin: 0 !important;
 }
 /* Адаптивность для мобильных устройств */
-#fullscreenStartTurnBtn {
+/* Ограничиваем 90vh только внутри модалки, чтобы не растягивать верстку */
+#fullscreenTurnModal #fullscreenStartTurnBtn {
   height: 90vh !important;
+}
+/* В обычном режиме — компактная плавающая кнопка */
+#fullscreenStartTurnBtn {
+  height: 56px !important;
+  width: 56px !important;
 }
 /* Уменьшение размера шрифта на очень маленьких экранах */
 @media (max-height: 600px) {
@@ -128,7 +140,6 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
   border: 1px solid #b3d6f6;
   border-radius: 8px;
   color: #444;
-  max-width: 900px;
 }
 
 #bestEffList h3 {
@@ -480,7 +491,55 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
   min-width: 50px !important;
 }
 
+/* Fix: remove hardcoded flex-basis on income inputs on mobile/any layout */
+.income-section .row > div { flex: 1 1 auto !important; min-width: 0 !important; }
+#incomeInvestWrap, #incomePriceWrap, #incomeMonthlyWrap, #incomeNameWrap { flex: 1 1 auto !important; min-width: 0 !important; }
+
+/* Fix calculators and buy forms: prevent fixed 150–220px columns */
+#profitableBuyCalculator .row > div,
+.partner-calc .row > div,
+#buy .row > div,
+#buyEasy .row > div,
+#buyBlock .row > div,
+#sell .row > div { flex: 1 1 auto !important; min-width: 0 !important; }
+
+/* Force-override any inline flex-basis like "flex: 0 0 150px" used in past tweaks */
+.row > div[style*="flex: 0 0"],
+.row > div[style*="flex:0 0"],
+#profitableBuyCalculator [style*="flex: 0 0"],
+#buyEasy [style*="flex: 0 0"],
+#buyBlock [style*="flex: 0 0"],
+#buy [style*="flex: 0 0"],
+#sell [style*="flex: 0 0"] {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+/* Match reference: two-column layout on wide screens for Easy Buy */
+@media (min-width: 700px){
+  #buyEasy .row { display:flex; flex-wrap:wrap; gap:16px; }
+  #buyEasy .row > div { flex: 1 1 320px !important; max-width: calc(50% - 16px); }
+}
+@media (max-width: 699px){
+  #buyEasy .row > div { flex: 1 1 100% !important; max-width: 100% !important; }
+}
+
+/* Match reference: two-column layout for KPI calculator inputs too */
+@media (min-width: 700px){
+  #profitableBuyCalculator .row { display:flex; flex-wrap:wrap; gap:16px; }
+  #profitableBuyCalculator .row > div { flex: 1 1 320px !important; max-width: calc(50% - 16px); }
+}
+@media (max-width: 699px){
+  #profitableBuyCalculator .row > div { flex: 1 1 100% !important; max-width: 100% !important; }
+}
+
 @media (max-width: 600px) {
+  /* Сбрасываем фиксированные ширины колонок .row на мобильных */
+  .row > div { flex: 1 1 auto !important; min-width: 0 !important; }
+  /* Внутри основных секций тоже полностью резиновые колонки */
+  .income-section .row > div,
+  .expense-section .row > div,
+  .forecast-section .row > div { flex: 1 1 auto !important; min-width: 0 !important; }
   /* Чуть сжимаем отступы и предотвращаем наложение Название и Тип */
   #forecastTable { font-size: 11px; }
   #forecastTable th, #forecastTable td { padding: 3px 2px; }
@@ -820,15 +879,15 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
   font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
-#kpdRows .row { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
-#kpdRows .row > div { flex: 0 1 auto; min-width: unset; }
-#kpdRows input[type="number"] { width: 80px; min-width: 60px; padding: 6px 4px; font-size: 15px; }
+#kpdRows .row { display: flex; flex-direction: row !important; gap: 4px; flex-wrap: nowrap !important; align-items: center; margin-bottom: 8px; }
+#kpdRows .row > div { flex: 0 0 auto !important; min-width: auto; }
+#kpdRows input[type="number"] { width: 88px !important; min-width: 70px; padding: 6px 4px; font-size: 15px; }
 #kpdRows .kpdCheck { width: auto; height: auto; margin-right: 2px; margin-left: 0; transform: none; }
 #kpdRows .kpdResult { min-width: 70px; font-size: 13px; margin-left: 4px; }
 /* Дублируем правила для .kpdRows чтобы внешний вид остался как был при переходе с id на class */
-.kpdRows .row { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.kpdRows .row { display: flex; flex-direction: row !important; gap: 4px; flex-wrap: nowrap !important; align-items: center; margin-bottom: 8px; }
 .kpdRows .row > div { flex: 0 1 auto; min-width: unset; }
-.kpdRows input[type="number"] { width: 80px; min-width: 60px; padding: 6px 4px; font-size: 15px; }
+.kpdRows input[type="number"] { width: 88px !important; min-width: 70px; padding: 6px 4px; font-size: 15px; }
 .kpdRows .kpdCheck { width: auto; height: auto; margin-right: 2px; margin-left: 0; transform: none !important; }
 .kpdRows .kpdResult { min-width: 70px; font-size: 13px; margin-left: 4px; }
   /* Компактные строки для Калькулятора Кэфа Расхода */
@@ -837,11 +896,11 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
   #expenseCoefBlock input[type="text"] { padding: 8px; font-size: 15px; }
   #expenseCoefBlock .expCoefRatio { font-size: 16px; }
 @media (max-width: 600px) {
-  #kpdRows .row { flex-wrap: wrap; gap: 2px; }
-  #kpdRows input[type="number"] { width: 60px; font-size: 13px; }
+  #kpdRows .row { flex-direction: row !important; flex-wrap: wrap; gap: 2px; }
+  #kpdRows input[type="number"] { width: 60px !important; font-size: 13px; }
   #kpdRows .kpdResult { min-width: 50px; font-size: 12px; }
-  .kpdRows .row { flex-wrap: wrap; gap: 2px; }
-  .kpdRows input[type="number"] { width: 60px; font-size: 13px; }
+  .kpdRows .row { flex-direction: row !important; flex-wrap: wrap; gap: 2px; }
+  .kpdRows input[type="number"] { width: 60px !important; font-size: 13px; }
   .kpdRows .kpdResult { min-width: 50px; font-size: 12px; }
 }
   .burned td { text-decoration: line-through; color:#aaa; }
@@ -1283,6 +1342,13 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
   .easy-text-close { position: absolute; top: 12px; right: 12px; background: #eee; border: 1px solid #ccc; color: #333; border-radius: 6px; padding: 6px 10px; cursor: pointer; }
   /* КПД в покупке — сворачивание */
   .kpd-toggle { background:#f2f2f2; border:1px solid #ddd; color:#666; border-radius:6px; padding:2px 8px; cursor:pointer; font-size:12px; opacity:.7; }
+  /* Светло-голубой вариант для кнопок процентов и доверия */
+  .kpd-toggle.light-blue,
+  .trust-btn.light-blue {
+    background: #e6f0ff !important;
+    border-color: #b3d6f6 !important;
+    color: #225 !important;
+  }
   .kpd-collapsible .kpdContent { display:block; }
   .kpd-collapsible.collapsed .kpdContent { display:none; }
   .kpd-collapsible.collapsed .kpd-toggle { opacity:.35; }
@@ -1507,6 +1573,306 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
   #finishTurnModal .modal-btn-finish:hover {
     background: #357abd;
   }
+  
+  /* Стили для раздела Союз */
+  .union-dialog {
+    position: relative;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+  }
+  
+  .union-edit-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent !important;
+    color: #b0b5bb;
+    border: none;
+    border-radius: 0;
+    padding: 1px 4px;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    box-shadow: none;
+    outline: none;
+    background-color: transparent !important;
+    border-color: transparent !important;
+  }
+  
+  .union-edit-btn:hover { color: #9aa0a6; background: transparent !important; }
+  
+  .union-text {
+    margin: 6px 0;
+    line-height: 1.45;
+    color: #333;
+    width: 100%;
+    max-width: 80ch;
+    word-wrap: break-word;
+    box-sizing: border-box;
+    font-size: 15px;
+  }
+  
+  .union-text.bold {
+    font-weight: bold;
+  }
+  
+  .union-text.large-bold {
+    font-weight: bold;
+    font-size: 16px;
+  }
+  
+  .union-text.blue-border {
+    border: 1px solid #007bff;
+    padding: 8px 5px;
+    border-radius: 8px;
+    background: #f0f8ff;
+    margin: 10px 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .union-text.green-border {
+    border: 1px solid #28a745;
+    padding: 8px 5px;
+    border-radius: 8px;
+    background: #f0fff0;
+    margin: 10px 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .union-input-group {
+    margin: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .union-input {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  
+  .union-percent {
+    color: #666;
+    font-size: 14px;
+  }
+  
+  .union-buttons {
+    margin: 10px 0 0 0 !important;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .union-btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+  }
+  
+  .union-btn.primary {
+    background: #007bff;
+    color: white;
+  }
+  
+  .union-btn.primary:hover {
+    background: #0056b3;
+  }
+  
+  .union-btn.success {
+    background: #28a745;
+    color: white;
+  }
+  
+  .union-btn.success:hover {
+    background: #1e7e34;
+  }
+  
+  .union-btn.danger {
+    background: #dc3545;
+    color: white;
+  }
+  
+  .union-btn.danger:hover {
+    background: #c82333;
+  }
+  
+  .union-btn.secondary {
+    background: #e6f0ff;
+    color: #223355;
+    border: 1px solid #b3d6f6;
+  }
+  
+  .union-btn.secondary:hover {
+    background: #d8e8ff;
+    color: #1e2a50;
+  }
+  
+  .union-btn.selected {
+    background: #ffc107 !important;
+    color: #000 !important;
+    font-weight: bold;
+    box-shadow: 0 0 0 2px #ffc107;
+  }
+  
+  .union-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .union-signature-area {
+    border: 1px dashed #ccc;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    background: #f8f9fa;
+    margin: 0 0 10px 0 !important;
+    min-height: 56px;
+    cursor: pointer;
+  }
+  /* Убираем зазор между блоком кнопок и подписью */
+  .union-buttons + .union-signature-area { margin-top: 0 !important; }
+  .union-buttons + .union-text { margin-top: 0 !important; }
+  .union-text + .union-signature-area { margin-top: 0 !important; }
+  .union-buttons + .union-input-group { margin-top: 0 !important; }
+  
+  .union-signature-area:hover {
+    border-color: #007bff;
+    background: #f0f8ff;
+  }
+  
+  .union-hidden {
+    display: none;
+  }
+  /* Порядок элементов берем из DOM, без принудительного order */
+  .union-content { display: flex; flex-direction: column; }
+  .union-input-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .union-signature-area, .union-input-group, .union-status { order: initial; }
+  
+  /* Убираем подпись "Распишитесь" перед полем подписи и сам зазор */
+  .union-text:has(+ .union-signature-area) { display: none !important; }
+  .union-text:has(+ .union-signature-area) + .union-signature-area { margin-top: 0 !important; }
+  /* Убираем пустой зазор (инлайновые спейсеры высотой 16px) внутри блока Союз */
+  .union-dialog div[style*="height: 16px"],
+  .union-content div[style*="height: 16px"] {
+    display: none !important;
+  }
+  /* Статус союза рядом с именем */
+  .union-status { color:#28a745; font-weight:700; display:inline; margin-left:6px; }
+  /* Контейнер Союза: равные и меньшие боковые поля на десктопе */
+  #unionSection {
+    padding-left: 8px;
+    padding-right: 12px;
+  }
+  
+  /* Мобильные стили для полного использования ширины */
+  @media (max-width: 768px) {
+    section {
+      padding: 8px;
+      padding-bottom: 80px; /* Добавляем отступ снизу для навигации */
+    }
+    
+    #unionSection {
+      padding: 8px !important;
+      margin: 8px 0 !important;
+    }
+    
+    .row {
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .row > div {
+      width: 100%;
+      flex: none;
+    }
+    
+    .union-buttons {
+      flex-direction: column;
+    }
+    
+    .union-btn {
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    
+    table {
+      font-size: 12px;
+    }
+    
+    th, td {
+      padding: 4px;
+    }
+    
+    /* Стили для союзов на мобильном */
+    .union-dialog {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 8px 8px !important;
+    }
+    
+    .union-text {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 8px 0 !important;
+      padding: 0 8px !important;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      line-height: 1.4 !important;
+    }
+    
+    .union-input-group {
+      width: 100% !important;
+    }
+    
+    .union-input {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
+  
+  .union-edit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .union-edit-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  
+  .union-edit-textarea {
+    width: 100%;
+    height: 200px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: inherit;
+    resize: vertical;
+  }
 </style>
 </head>
 <body>
@@ -1588,6 +1954,7 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
 </div>
 <section id="participants" role="tabpanel" aria-labelledby="tabParticipants">
   <h2>Главное</h2>
+  
   <!-- Ведомость -->
   <div id="ledgerBlock" style="margin:6px 0 18px 0;padding:0;max-width:980px">
     <h3 style="margin:4px 0 10px 0">Ведомость</h3>
@@ -1879,21 +2246,102 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
   <table id="participantsTable"></table>
   
   <!-- Деньги партнеру -->
-  <h3 style="margin:24px 0 8px 0">Деньги партнёру</h3>
-  <div class="row" style="align-items:center;gap:8px;margin-top:6px">
-    <div style="flex:0 0 220px">
+  <h3 style="margin:16px 0 6px 0">Деньги партнёру</h3>
+  <div class="row partner-money" style="gap:8px;margin-top:4px;flex-direction:column;align-items:stretch">
+    <div style="width:100%">
       <select id="partnerPayName" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px">
         <option value="">— выбрать —</option>
       </select>
     </div>
-    <div style="flex:0 0 180px"><input id="partnerPaySum" type="number" step="0.01" placeholder="Сумма $" onfocus="clearZeroOnFocus(this)"></div>
-    <div style="flex:0 0 auto"><button class="btn" onclick="givePartnerMoney()">Отдать</button></div>
+    <div style="width:100%"><input id="partnerPaySum" type="number" step="0.01" placeholder="Сумма $" onfocus="clearZeroOnFocus(this)" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px"></div>
+    <div style="width:100%"><button class="btn" onclick="givePartnerMoney()" style="width:100%">Отдать</button></div>
   </div>
   
+  <!-- Раздел Союз -->
+  <div id="unionSection" style="margin:16px 0;padding:8px;max-width:100%">
+    <h3 style="margin:0 0 16px 0;color:#333;display:flex;align-items:center;justify-content:space-between">
+      Союз
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="editUnionBtn" class="btn" onclick="editAllUnions()" title="Редактировать союзы" style="background:#007bff;padding:8px 16px;font-size:16px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center">✏️</button>
+        <button id="viewHistoryBtn" class="btn" onclick="viewUnionHistory()" title="Просмотр истории союзов" style="background:#6c757d;padding:8px 16px;font-size:16px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center">📋</button>
+        <button id="addUnionBtn" class="btn" onclick="addUnion()" style="background:#28a745;padding:8px 16px;font-size:18px;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center">+</button>
+      </div>
+    </h3>
+    
+    <!-- Контейнер для союзов -->
+    <div id="unionsContainer"></div>
+    
+    <!-- Шаблон диалога союза (скрыт) -->
+    <div id="unionDialogTemplate" style="display:none;">
+      <div class="union-dialog" style="margin:16px 0;padding:20px;">
+        <div class="union-content">
+          <!-- Содержимое диалога будет добавляться динамически -->
+        </div>
+      </div>
+    </div>
+  </div>
 
   
 
 </section>
+<script>
+// Фикс порядка элементов в блоках Союза: [подпись] → [имя] → [статус]
+(function(){
+  function insertAfter(parent, node, after){
+    if (!parent || !node) return;
+    if (after && after.parentNode === parent) {
+      if (after.nextSibling) parent.insertBefore(node, after.nextSibling); else parent.appendChild(node);
+    } else {
+      parent.appendChild(node);
+    }
+  }
+  function fixUnionLayoutOnce(dialog){
+    try{
+      if (!dialog) return;
+      const content = dialog.querySelector('.union-content') || dialog;
+      const signature = dialog.querySelector('.union-signature-area');
+      // Группа с именем или само поле имени (readonly)
+      let inputGrp = dialog.querySelector('.union-input-group');
+      if (!inputGrp) {
+        inputGrp = dialog.querySelector('input.union-input[readonly]') || dialog.querySelector('input[id^="playerNameReadonly-"]');
+      }
+      const status = dialog.querySelector('.union-status');
+      // Подпись «Подпись зафиксирована»
+      const fixedNote = Array.from(dialog.querySelectorAll('.union-text'))
+        .find(el => (el.textContent||'').trim().toLowerCase().includes('подпись зафиксирована')) || null;
+      // Скрываем текстовую подпись "Распишитесь"
+      try{
+        const labels = dialog.querySelectorAll('.union-text');
+        labels.forEach(el=>{ if ((el.textContent||'').trim().toLowerCase().includes('распишитесь')) el.style.display='none'; });
+      }catch{}
+      if (!content || !inputGrp) return;
+      if (signature) {
+        try{ if (signature.parentNode !== content || signature.nextSibling !== inputGrp) content.insertBefore(signature, inputGrp); }catch{}
+      }
+      if (status) {
+        try{
+          if (fixedNote) {
+            if (status.previousSibling !== fixedNote) { content.removeChild(status); insertAfter(content, status, fixedNote); }
+          } else if (inputGrp) {
+            if (status.previousSibling !== inputGrp) { content.removeChild(status); insertAfter(content, status, inputGrp); }
+          }
+        }catch{}
+      }
+    }catch{}
+  }
+  function fixAll(){
+    try{ document.querySelectorAll('.union-dialog').forEach(fixUnionLayoutOnce); }catch{}
+  }
+  // Первичный вызов
+  setTimeout(fixAll, 0);
+  // Наблюдатель за изменениями внутри контейнера союзов
+  try{
+    const host = document.getElementById('unionsContainer') || document;
+    const mo = new MutationObserver(()=>{ fixAll(); });
+    mo.observe(host, { childList:true, subtree:true });
+  }catch{}
+})();
+</script>
 <section id="buy" role="tabpanel" aria-labelledby="tabBuy" hidden>
   <h2>Покупка акций</h2>
   <div class="row" style="align-items:flex-end">
@@ -1926,15 +2374,17 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
   <div style="margin:32px 0 0 0;padding:18px 16px 18px 16px;background:#f6fff6;border:1px solid #b3f6b3;border-radius:8px;color:#444;max-width:900px">
     <h3 style="margin-top:0;display:flex;align-items:center;justify-content:space-between">Легкая покупка <button class="actBtn" id="easyClearBtn" title="Очистить поля" onclick="clearEasyBuy()">✖</button></h3>
     <div id="easySummaryTop" style="font-size:16px;color:#226;margin:6px 0 24px 0"></div>
-    <div class="row" style="max-width:400px;margin-top:4px;flex-wrap:nowrap">
-      <div style="flex:0 0 180px;font-size:13px;color:#666;text-align:left">Сумма $</div>
-      <div style="flex:0 0 180px;font-size:13px;color:#666;text-align:left">Цена акции</div>
+    <div class="row" style="max-width:400px;margin-top:4px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-items:flex-start">
+      <div class="easy-field" style="display:flex;flex-direction:column">
+        <label style="display:block;font-size:13px;color:#666;margin-bottom:4px">Сумма $</label>
+        <input id="easySum" type="number" step="0.01" placeholder="Сумма $" onfocus="clearZeroOnFocus(this)" class="easy-input">
+      </div>
+      <div class="easy-field" style="display:flex;flex-direction:column">
+        <label style="display:block;font-size:13px;color:#666;margin-bottom:4px">Цена акции</label>
+        <input id="easyPrice" type="number" step="0.01" placeholder="Цена акции" onfocus="clearZeroOnFocus(this)" class="easy-input">
+      </div>
     </div>
-    <div class="row" style="max-width:400px;margin-top:4px;flex-wrap:nowrap">
-      <div class="easy-field"><input id="easySum" type="number" step="0.01" placeholder="Сумма $" onfocus="clearZeroOnFocus(this)" class="easy-input"></div>
-      <div class="easy-field"><input id="easyPrice" type="number" step="0.01" placeholder="Цена акции" onfocus="clearZeroOnFocus(this)" class="easy-input"></div>
-    </div>
-    <div class="row" style="max-width:400px;margin-top:8px;flex-wrap:nowrap;align-items:flex-start">
+    <div class="row" style="max-width:400px;margin-top:8px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-items:flex-start">
       <div class="easy-field" style="display:flex;flex-direction:column">
         <label style="display:block;font-size:13px;color:#666;margin-bottom:4px">Из них мои</label>
         <input id="easyMySum" type="number" step="0.01" placeholder="Из них мои" oninput="updateEasyBuyMy()" onfocus="clearZeroOnFocus(this)" class="easy-input">
@@ -1992,15 +2442,7 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
   <div id="sellSummary" class="small"></div>
 </section>
 <section id="partners" role="tabpanel" aria-labelledby="tabPartners" hidden>
-  <h2>Партнерские сделки</h2>
-  <div class="row">
-    <div><input id="partnerSymbol" placeholder="Название акции"></div>
-    <div><input id="partnerSum" type="number" step="0.01" placeholder="Сумма покупки" onfocus="clearZeroOnFocus(this)"></div>
-    <div><input id="partnerBuy" type="number" step="0.01" placeholder="Курс покупки" onfocus="clearZeroOnFocus(this)"></div>
-    <div><input id="partnerSell" type="number" step="0.01" placeholder="Курс продажи" onfocus="clearZeroOnFocus(this)"></div>
-    <div><input id="partnerCom" type="number" step="1" placeholder="Комиссия %" onfocus="clearZeroOnFocus(this)"></div>
-  </div>
-  <div id="partnerResult" class="small"></div>
+  <div id="partnersContent"></div>
 </section>
 <section id="history" role="tabpanel" aria-labelledby="tabHistory" hidden>
   <h2>История операций</h2>
@@ -2015,10 +2457,13 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
     <button class="btn" onclick="clearErrorHistory()" style="background:#f87171">Очистить ошибки</button>
     <button class="btn" onclick="seedTestBtnClick()" style="background:#4a90e2">Тест 1</button>
     <button class="btn" onclick="seedTestBtn2Click()" style="background:#6c757d">Тест 2</button>
-    <button class="btn" onclick="testTimer15Sound()" style="background:#8b5cf6">Тест звука 15 сек</button>
-    <button class="btn" onclick="testTimer7Sound()" style="background:#10b981">Тест звука 7 сек</button>
     <button class="btn" onclick="testDoubleCashflow()" style="background:#dc2626">Тест двойного потока</button>
-     <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap;">
+    <button class="btn" onclick="resetAll()" style="background:#c33">Удалить всё</button>
+    <button class="btn" onclick="clearOldHistory()" style="background:#dc2626">Очистить старую историю</button>
+    <input type="file" id="importFileInput" style="display:none" accept="application/json">
+    <input id="historySearch" placeholder="Поиск..." style="flex:1;min-width:160px;padding:8px;border:1px solid #ccc;border-radius:4px" onfocus="clearZeroOnFocus(this)">
+  </div>
+  <div id="alarmButtonsRow" style="margin:8px 0;display:flex;gap:4px;flex-wrap:wrap;">
        <button class="btn" onclick="testSound1()" style="background:#f59e0b;padding:4px 8px;font-size:12px;">Тревога 1</button>
        <button class="btn" onclick="testSound2()" style="background:#f97316;padding:4px 8px;font-size:12px;">Тревога 2</button>
        <button class="btn" onclick="testBeep()" style="background:#8b5cf6;padding:4px 8px;font-size:12px;">Тревога 3</button>
@@ -2030,54 +2475,86 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
        <button class="btn" onclick="testSound9()" style="background:#14b8a6;padding:4px 8px;font-size:12px;">Тревога 9</button>
        <button class="btn" onclick="testSound10()" style="background:#f43f5e;padding:4px 8px;font-size:12px;">Тревога 10</button>
      </div>
-     
-     <!-- Настройки звуков таймера -->
-     <div style="margin-top:12px;padding:12px;background:#f8f9fa;border:1px solid #e9ecef;border-radius:6px;">
-       <div style="font-weight:600;margin-bottom:8px;color:#333;">Настройки звуков таймера:</div>
-       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-         <div style="display:flex;align-items:center;gap:6px;">
-           <label style="font-size:14px;color:#555;">15 сек:</label>
-           <select id="timer15Sound" style="padding:4px 8px;border:1px solid #ccc;border-radius:4px;font-size:13px;" onchange="saveTimerSounds()">
-             <option value="playBong">Гонг</option>
-             <option value="playSound1">Тревога 1</option>
-             <option value="playSound2">Тревога 2</option>
-             <option value="playSound3">Тревога 3</option>
-             <option value="playSound4">Тревога 4</option>
-             <option value="playSound5">Тревога 5</option>
-             <option value="playSound6">Тревога 6</option>
-             <option value="playSound7">Тревога 7</option>
-             <option value="playSound8">Тревога 8</option>
-             <option value="playSound9">Тревога 9</option>
-             <option value="playSound10">Тревога 10</option>
-             <option value="playBeep">Бип</option>
-           </select>
-           <button class="btn" onclick="testTimer15Sound()" style="background:#8b5cf6;padding:4px 8px;font-size:12px;">Тест</button>
-         </div>
-         <div style="display:flex;align-items:center;gap:6px;">
-           <label style="font-size:14px;color:#555;">7 сек:</label>
-           <select id="timer7Sound" style="padding:4px 8px;border:1px solid #ccc;border-radius:4px;font-size:13px;" onchange="saveTimerSounds()">
-             <option value="playSound3">Тревога 3</option>
-             <option value="playBong">Гонг</option>
-             <option value="playSound1">Тревога 1</option>
-             <option value="playSound2">Тревога 2</option>
-             <option value="playSound4">Тревога 4</option>
-             <option value="playSound5">Тревога 5</option>
-             <option value="playSound6">Тревога 6</option>
-             <option value="playSound7">Тревога 7</option>
-             <option value="playSound8">Тревога 8</option>
-             <option value="playSound9">Тревога 9</option>
-             <option value="playSound10">Тревога 10</option>
-             <option value="playBeep">Бип</option>
-           </select>
-           <button class="btn" onclick="testTimer7Sound()" style="background:#10b981;padding:4px 8px;font-size:12px;">Тест</button>
-         </div>
-       </div>
-     </div>
-     
-    <button class="btn" onclick="resetAll()" style="background:#c33">Удалить всё</button>
-    <button class="btn" onclick="clearOldHistory()" style="background:#dc2626">Очистить старую историю</button>
-    <input type="file" id="importFileInput" style="display:none" accept="application/json">
-    <input id="historySearch" placeholder="Поиск..." style="flex:1;min-width:160px;padding:8px;border:1px solid #ccc;border-radius:4px" onfocus="clearZeroOnFocus(this)">
+    
+  <!-- Постоянные кнопки настройки звука таймера -->
+  <div id="timerSoundsHolder" data-static="true" data-protected="true" style="margin:10px 0 0 0;padding:10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;max-width:1000px;">
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-size:13px;color:#666">Старт</label>
+        <select id="timerStartSound" data-protected="true" style="padding:4px 6px;font-size:13px">
+          <option value="playBong">Гонг</option>
+          <option value="playBeep">Бип</option>
+          <option value="playSound1">Тревога 1</option>
+          <option value="playSound2">Тревога 2</option>
+          <option value="playSound3">Тревога 3</option>
+          <option value="playSound4">Тревога 4</option>
+          <option value="playSound5">Тревога 5</option>
+          <option value="playSound6">Тревога 6</option>
+          <option value="playSound7">Тревога 7</option>
+          <option value="playSound8">Тревога 8</option>
+          <option value="playSound9">Тревога 9</option>
+          <option value="playSound10">Тревога 10</option>
+        </select>
+        <button class="btn" id="testStartBtn_global" data-protected="true" style="padding:4px 8px;font-size:13px">Тест старт</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-size:13px;color:#666">15 сек</label>
+        <select id="timer15Sound" data-protected="true" style="padding:4px 6px;font-size:13px">
+          <option value="playBong">Гонг</option>
+          <option value="playBeep">Бип</option>
+          <option value="playSound1">Тревога 1</option>
+          <option value="playSound2">Тревога 2</option>
+          <option value="playSound3">Тревога 3</option>
+          <option value="playSound4">Тревога 4</option>
+          <option value="playSound5">Тревога 5</option>
+          <option value="playSound6">Тревога 6</option>
+          <option value="playSound7">Тревога 7</option>
+          <option value="playSound8">Тревога 8</option>
+          <option value="playSound9">Тревога 9</option>
+          <option value="playSound10">Тревога 10</option>
+        </select>
+        <button class="btn" id="test15Btn_global" data-protected="true" style="padding:4px 8px;font-size:13px">Тест 15с</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-size:13px;color:#666">7 сек</label>
+        <select id="timer7Sound" data-protected="true" style="padding:4px 6px;font-size:13px">
+          <option value="playBong">Гонг</option>
+          <option value="playBeep">Бип</option>
+          <option value="playSound1">Тревога 1</option>
+          <option value="playSound2">Тревога 2</option>
+          <option value="playSound3">Тревога 3</option>
+          <option value="playSound4">Тревога 4</option>
+          <option value="playSound5">Тревога 5</option>
+          <option value="playSound6">Тревога 6</option>
+          <option value="playSound7">Тревога 7</option>
+          <option value="playSound8">Тревога 8</option>
+          <option value="playSound9">Тревога 9</option>
+          <option value="playSound10">Тревога 10</option>
+        </select>
+        <button class="btn" id="test7Btn_global" data-protected="true" style="padding:4px 8px;font-size:13px">Тест 7с</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-size:13px;color:#666">3 сек</label>
+        <select id="timer3Sound" data-protected="true" style="padding:4px 6px;font-size:13px">
+          <option value="playBong">Гонг</option>
+          <option value="playBeep">Бип</option>
+          <option value="playSound1">Тревога 1</option>
+          <option value="playSound2">Тревога 2</option>
+          <option value="playSound3">Тревога 3</option>
+          <option value="playSound4">Тревога 4</option>
+          <option value="playSound5">Тревога 5</option>
+          <option value="playSound6">Тревога 6</option>
+          <option value="playSound7">Тревога 7</option>
+          <option value="playSound8">Тревога 8</option>
+          <option value="playSound9">Тревога 9</option>
+          <option value="playSound10">Тревога 10</option>
+        </select>
+        <button class="btn" id="test3Btn_global" data-protected="true" style="padding:4px 8px;font-size:13px">Тест 3с</button>
+      </div>
+      <div>
+        <button class="btn" id="timerSoundsSaveBtn_global" data-protected="true" style="padding:4px 10px;font-size:13px">Сохранить</button>
+      </div>
+    </div>
   </div>
   <h3 style="margin:24px 0 8px 0">График по ходам</h3>
   <canvas id="balanceChart" height="220" style="max-width:900px;width:100%;height:220px;background:#fff;border:1px solid #eee;border-radius:8px;display:block;margin:0 auto 8px auto"></canvas>
@@ -2181,15 +2658,17 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
   <div id="postTurnEasyBuy" style="margin:32px 0 0 0;padding:18px 16px 18px 16px;background:#f6fff6;border:1px solid #b3f6b3;border-radius:8px;color:#444;max-width:900px">
     <h3 style="margin-top:0;display:flex;align-items:center;justify-content:space-between">Легкая покупка <button class="actBtn" id="easyClearBtnMoves" title="Очистить поля" onclick="clearEasyBuyMoves()">✖</button></h3>
     <div id="easySummaryTopMoves" style="font-size:16px;color:#226;margin:6px 0 24px 0"></div>
-    <div class="row" style="max-width:400px;margin-top:4px;flex-wrap:nowrap">
-      <div style="flex:0 0 180px;font-size:13px;color:#666;text-align:left">Сумма $</div>
-      <div style="flex:0 0 180px;font-size:13px;color:#666;text-align:left">Цена акции</div>
+    <div class="row" style="max-width:400px;margin-top:4px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-items:flex-start">
+      <div class="easy-field" style="display:flex;flex-direction:column">
+        <label style="display:block;font-size:13px;color:#666;margin-bottom:4px">Сумма $</label>
+        <input id="easySumMoves" type="number" step="0.01" placeholder="Сумма $" onfocus="clearZeroOnFocus(this)" oninput="updateEasyBuyMoves()" class="easy-input">
+      </div>
+      <div class="easy-field" style="display:flex;flex-direction:column">
+        <label style="display:block;font-size:13px;color:#666;margin-bottom:4px">Цена акции</label>
+        <input id="easyPriceMoves" type="number" step="0.01" placeholder="Цена акции" onfocus="clearZeroOnFocus(this)" oninput="updateEasyBuyMoves()" class="easy-input">
+      </div>
     </div>
-    <div class="row" style="max-width:400px;margin-top:4px;flex-wrap:nowrap">
-      <div class="easy-field"><input id="easySumMoves" type="number" step="0.01" placeholder="Сумма $" onfocus="clearZeroOnFocus(this)" oninput="updateEasyBuyMoves()" class="easy-input"></div>
-      <div class="easy-field"><input id="easyPriceMoves" type="number" step="0.01" placeholder="Цена акции" onfocus="clearZeroOnFocus(this)" oninput="updateEasyBuyMoves()" class="easy-input"></div>
-    </div>
-    <div class="row" style="max-width:400px;margin-top:8px;flex-wrap:nowrap;align-items:flex-start">
+    <div class="row" style="max-width:400px;margin-top:8px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-items:flex-start">
       <div class="easy-field" style="display:flex;flex-direction:column">
         <label style="display:block;font-size:13px;color:#666;margin-bottom:4px">Из них мои</label>
         <input id="easyMySumMoves" type="number" step="0.01" placeholder="Из них мои" oninput="updateEasyBuyMyMoves()" onfocus="clearZeroOnFocus(this)" class="easy-input">
@@ -2610,71 +3089,6 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
         }
       });
     })();
-  // Ensure timer sound controls for Start and 3 sec exist alongside 15/7
-  try {
-    document.addEventListener('DOMContentLoaded', function(){
-      const byId = (id)=>document.getElementById(id);
-      const sel15 = byId('timer15Sound');
-      const sel7 = byId('timer7Sound');
-      const container = sel15 ? sel15.parentElement : (sel7 ? sel7.parentElement : null);
-      if (!container) return;
-
-      const makeOptionList = ()=>{
-        const opts = [];
-        for (let i = 1; i <= 10; i++) {
-          const opt = document.createElement('option');
-          opt.value = 'playSound' + i;
-          opt.textContent = 'Тревога ' + i;
-          opts.push(opt);
-        }
-        return opts;
-      };
-
-      const ensureSelect = (id, labelText) => {
-        if (byId(id)) return;
-        const label = document.createElement('span');
-        label.textContent = labelText + ': ';
-        label.style.marginLeft = '12px';
-        const select = document.createElement('select');
-        select.id = id;
-        select.style.padding = '4px 6px';
-        select.style.fontSize = '13px';
-        makeOptionList().forEach(o=>select.appendChild(o));
-        const testBtn = document.createElement('button');
-        testBtn.className = 'btn';
-        testBtn.style.padding = '4px 8px';
-        testBtn.style.marginLeft = '8px';
-        testBtn.style.fontSize = '13px';
-        if (id === 'timerStartSound') { testBtn.id = 'testStartBtn'; testBtn.textContent = 'Тест'; }
-        else if (id === 'timer3Sound') { testBtn.id = 'test3Btn'; testBtn.textContent = 'Тест'; }
-        // Insert before a save button if present, otherwise at the end
-        const saveBtn = byId('timerSoundsSaveBtn');
-        const frag = document.createDocumentFragment();
-        frag.appendChild(label);
-        frag.appendChild(select);
-        frag.appendChild(testBtn);
-        if (saveBtn && saveBtn.parentElement === container) {
-          container.insertBefore(frag, saveBtn);
-        } else {
-          container.appendChild(frag);
-        }
-      };
-
-      ensureSelect('timerStartSound', 'Старт');
-      ensureSelect('timer3Sound', '3 сек');
-
-      // Wire up existing logic
-      try { if (typeof loadTimerSounds === 'function') loadTimerSounds(); } catch {}
-      try {
-        const getTimerSoundFunction = window.getTimerSoundFunction || (typeof window.getTimerSoundFunction==='function' ? window.getTimerSoundFunction : null);
-        const playSelected = (selectId)=>{ try{ const sel = byId(selectId); const fn = getTimerSoundFunction && sel ? getTimerSoundFunction(sel.value) : null; if (fn) fn(); }catch{} };
-        const tStart = byId('testStartBtn'); if (tStart) tStart.onclick = ()=> playSelected('timerStartSound');
-        const t3 = byId('test3Btn'); if (t3) t3.onclick = ()=> playSelected('timer3Sound');
-        const saveBtn = byId('timerSoundsSaveBtn'); if (saveBtn && !saveBtn._wired){ saveBtn._wired = true; saveBtn.onclick = ()=>{ try{ saveTimerSounds(); showToast('Сохранено'); }catch{} }; }
-      } catch {}
-    });
-  } catch {}
-
   </script>
   <script>
     // Кнопки Тест/Тест2/Тест звука в Истории
@@ -3570,6 +3984,109 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
         if (currentTabId) {
           try { setActive(currentTabId); } catch {}
         }
+        
+        // Принудительно восстанавливаем кнопки звука после загрузки тестовых данных
+        setTimeout(() => {
+          try {
+            const holder = document.getElementById('timerSoundsHolder');
+            if (!holder || !document.contains(holder)) {
+              console.log('Восстанавливаем кнопки звука...');
+              // Создаем кнопки заново, если они были удалены
+              const alarmButtons = document.getElementById('alarmButtonsRow');
+              if (alarmButtons) {
+                const newHolder = document.createElement('div');
+                newHolder.id = 'timerSoundsHolder';
+                newHolder.setAttribute('data-static', 'true');
+                newHolder.setAttribute('data-protected', 'true');
+                newHolder.style.cssText = 'margin:10px 0 0 0;padding:10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;max-width:1000px;';
+                newHolder.innerHTML = `
+                  <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <label style="font-size:13px;color:#666">Старт</label>
+                      <select id="timerStartSound" data-protected="true" style="padding:4px 6px;font-size:13px">
+                        <option value="playBong">Гонг</option>
+                        <option value="playBeep">Бип</option>
+                        <option value="playSound1">Тревога 1</option>
+                        <option value="playSound2">Тревога 2</option>
+                        <option value="playSound3">Тревога 3</option>
+                        <option value="playSound4">Тревога 4</option>
+                        <option value="playSound5">Тревога 5</option>
+                        <option value="playSound6">Тревога 6</option>
+                        <option value="playSound7">Тревога 7</option>
+                        <option value="playSound8">Тревога 8</option>
+                        <option value="playSound9">Тревога 9</option>
+                        <option value="playSound10">Тревога 10</option>
+                      </select>
+                      <button class="btn" id="testStartBtn_global" data-protected="true" style="padding:4px 8px;font-size:13px">Тест старт</button>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <label style="font-size:13px;color:#666">15 сек</label>
+                      <select id="timer15Sound" data-protected="true" style="padding:4px 6px;font-size:13px">
+                        <option value="playBong">Гонг</option>
+                        <option value="playBeep">Бип</option>
+                        <option value="playSound1">Тревога 1</option>
+                        <option value="playSound2">Тревога 2</option>
+                        <option value="playSound3">Тревога 3</option>
+                        <option value="playSound4">Тревога 4</option>
+                        <option value="playSound5">Тревога 5</option>
+                        <option value="playSound6">Тревога 6</option>
+                        <option value="playSound7">Тревога 7</option>
+                        <option value="playSound8">Тревога 8</option>
+                        <option value="playSound9">Тревога 9</option>
+                        <option value="playSound10">Тревога 10</option>
+                      </select>
+                      <button class="btn" id="test15Btn_global" data-protected="true" style="padding:4px 8px;font-size:13px">Тест 15с</button>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <label style="font-size:13px;color:#666">7 сек</label>
+                      <select id="timer7Sound" data-protected="true" style="padding:4px 6px;font-size:13px">
+                        <option value="playBong">Гонг</option>
+                        <option value="playBeep">Бип</option>
+                        <option value="playSound1">Тревога 1</option>
+                        <option value="playSound2">Тревога 2</option>
+                        <option value="playSound3">Тревога 3</option>
+                        <option value="playSound4">Тревога 4</option>
+                        <option value="playSound5">Тревога 5</option>
+                        <option value="playSound6">Тревога 6</option>
+                        <option value="playSound7">Тревога 7</option>
+                        <option value="playSound8">Тревога 8</option>
+                        <option value="playSound9">Тревога 9</option>
+                        <option value="playSound10">Тревога 10</option>
+                      </select>
+                      <button class="btn" id="test7Btn_global" data-protected="true" style="padding:4px 8px;font-size:13px">Тест 7с</button>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <label style="font-size:13px;color:#666">3 сек</label>
+                      <select id="timer3Sound" data-protected="true" style="padding:4px 6px;font-size:13px">
+                        <option value="playBong">Гонг</option>
+                        <option value="playBeep">Бип</option>
+                        <option value="playSound1">Тревога 1</option>
+                        <option value="playSound2">Тревога 2</option>
+                        <option value="playSound3">Тревога 3</option>
+                        <option value="playSound4">Тревога 4</option>
+                        <option value="playSound5">Тревога 5</option>
+                        <option value="playSound6">Тревога 6</option>
+                        <option value="playSound7">Тревога 7</option>
+                        <option value="playSound8">Тревога 8</option>
+                        <option value="playSound9">Тревога 9</option>
+                        <option value="playSound10">Тревога 10</option>
+                      </select>
+                      <button class="btn" id="test3Btn_global" data-protected="true" style="padding:4px 8px;font-size:13px">Тест 3с</button>
+                    </div>
+                    <div>
+                      <button class="btn" id="timerSoundsSaveBtn_global" data-protected="true" style="padding:4px 10px;font-size:13px">Сохранить</button>
+                    </div>
+                  </div>
+                `;
+                alarmButtons.parentNode.insertBefore(newHolder, alarmButtons.nextSibling);
+                // Инициализируем обработчики событий
+                initTimerSoundControls();
+              }
+            }
+          } catch (e) {
+            console.error('Ошибка при восстановлении кнопок звука:', e);
+          }
+        }, 500);
       }catch(e){ 
         console.error('Ошибка в Тест 2:', e);
         alert('Ошибка при загрузке тестовых данных: ' + e.message); 
@@ -3577,20 +4094,6 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
     }
     function testGong(){ try{ const fn = (typeof playBong==='function') ? playBong : null; if (fn) fn(); else alert('Звук недоступен'); }catch(e){ alert('Звук недоступен'); } }
     function testBeep(){ try{ const fn = (typeof playBeep==='function') ? playBeep : null; if (fn) fn(); else alert('Звук 2 недоступен'); }catch(e){ alert('Звук 2 недоступен'); } }
-    function testTimer15Sound(){ 
-      try{ 
-        const sound15 = localStorage.getItem('cf_timer15Sound') || 'playBong';
-        const fn = getTimerSoundFunction(sound15);
-        if (fn) fn(); else alert('Звук недоступен'); 
-      }catch(e){ alert('Звук недоступен'); } 
-    }
-    function testTimer7Sound(){ 
-      try{ 
-        const sound7 = localStorage.getItem('cf_timer7Sound') || 'playSound3';
-        const fn = getTimerSoundFunction(sound7);
-        if (fn) fn(); else alert('Звук недоступен'); 
-      }catch(e){ alert('Звук недоступен'); } 
-    }
     function testSound1(){ try{ const fn = (typeof playSound1==='function') ? playSound1 : null; if (fn) fn(); else alert('Звук 1 недоступен'); }catch(e){ alert('Звук 1 недоступен'); } }
     function testSound2(){ try{ const fn = (typeof playSound2==='function') ? playSound2 : null; if (fn) fn(); else alert('Звук 2 недоступен'); }catch(e){ alert('Звук 2 недоступен'); } }
     function testSound3(){ try{ const fn = (typeof playSound3==='function') ? playSound3 : null; if (fn) fn(); else alert('Звук 3 недоступен'); }catch(e){ alert('Звук 3 недоступен'); } }
@@ -8403,6 +8906,9 @@ function renderParticipants(){
   // Перезагружаем участников на случай если они были сброшены
   participants = LS.load('cf_participants', []);
   
+  // Убеждаемся, что кнопки управления звуком всегда отображаются
+  try{ ensureTimerSoundControlsAlways(); }catch(e){ console.warn('ensureTimerSoundControlsAlways error', e); }
+  
   const tbl=$('#participantsTable');tbl.innerHTML='';
   tbl.innerHTML='<tr><th>Имя</th><th>Ком %</th><th></th></tr>';
   participants.forEach((p,i)=>{
@@ -8493,6 +8999,9 @@ function editCom(e){
   try{ addTurnEventForCurrentTurn(0, 'Сброс всех данных'); }catch{}
   try{ renderTurnsHistory(); }catch{}
   
+  // Сохраняем вступительный текст перед очисткой
+  const introTextValue = localStorage.getItem('cf_intro_text') || '';
+  
   // Очищаем все данные, кроме поля текста стартового
   localStorage.removeItem('cf_participants');
   localStorage.removeItem('cf_participantCom');
@@ -8539,6 +9048,11 @@ function editCom(e){
   // localStorage.removeItem('cf_timer_pos');
   // НЕ удаляем шаблоны покупки и продажи
   // НЕ удаляем поле текста стартового
+  
+  // Восстанавливаем вступительный текст
+  if (introTextValue) {
+    localStorage.setItem('cf_intro_text', introTextValue);
+  }
   
   try{
     // Чистим визуальные артефакты ходов
@@ -8601,6 +9115,11 @@ function editCom(e){
     localStorage.removeItem('cf_expenseCoef');
   } catch {}
   
+  // Создаем кнопки управления звуком перед перезагрузкой
+  try {
+    ensureTimerSoundControlsAlways();
+  } catch {}
+  
   location.reload();
 }
 // Автоматическое сохранение: все изменения сохраняются в localStorage мгновенно, черновики и состояние вкладок не теряются при закрытии или обновлении страницы.
@@ -8613,7 +9132,7 @@ function renderBuy(){
   participants = LS.load('cf_participants', []);
   
   tbl.innerHTML='<tr><th>Участник</th><th>Сумма</th><th>Акций</th></tr>';
-  participants.forEach(p=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${p}</td><td><div style="display:flex;gap:6px;align-items:center;justify-content:center"><input type="number" min="0" class="buySum" data-p="${p}" value="" onfocus="clearZeroOnFocus(this)"><button class="actBtn buyQuick" data-p="${p}" title="Быстрый ввод">⚡</button></div></td><td class="buyQty">0</td>`;tbl.appendChild(tr);});
+  participants.forEach(p=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${p}</td><td><div style="display:flex;gap:6px;align-items:center;justify-content:center"><button class="actBtn buyQuick" data-p="${p}" title="Быстрый ввод">⚡</button><input type="number" min="0" class="buySum" data-p="${p}" value="" onfocus="clearZeroOnFocus(this)"></div></td><td class="buyQty">0</td>`;tbl.appendChild(tr);});
   // Восстанавливаем временные значения
   loadBuyTempFields();
   tbl.querySelectorAll('.buySum').forEach(inp=>{
@@ -8919,7 +9438,10 @@ function updateBuyCalc(){
     inp.closest('tr').querySelector('.buyQty').textContent=fmt(qty);
     totalQty+=qty;totalSum+=sum;lastBuy.by[p]=inp.value;
   });
-  let summary = price?`Сумма: ${fmtPretty(totalSum, 0)}$ • Акций: ${Math.floor(totalQty)} шт.`:'';
+  let summary = totalSum > 0 ? `Сумма: ${fmtPretty(totalSum, 0)}$` : '';
+  if (price && totalSum > 0) {
+    summary += ` • Акций: ${Math.floor(totalQty)} шт.`;
+  }
   let details = '';
   if(price && $('#buySymbol').value.trim()){
     details = `<div style="margin-top:6px;font-size:15px;color:#444">${$('#buySymbol').value.trim().toUpperCase()} • ${Math.floor(totalQty)} • ${Math.round(price)} / ${fmtPretty(totalSum, 0)}</div>`;
@@ -9334,6 +9856,8 @@ function renderSellTemplates(){
 }
 function confirmDelSellSymbolTpl(i){if(confirm('Удалить этот шаблон?')) delSellSymbolTpl(i);}
 function confirmDelSellPriceTpl(i){if(confirm('Удалить этот шаблон?')) delSellPriceTpl(i);}
+// Закомментировано, так как элементы партнеров теперь создаются динамически
+/*
 $('#partnerSymbol').addEventListener('change',()=>{
   const val=$('#partnerSymbol').value.trim();
   if(val && !sellSymbolTpls.includes(val)){
@@ -9346,6 +9870,7 @@ $('#partnerSell').addEventListener('change',()=>{
     sellPriceTpls.push(val);LS.save('cf_sellPriceTpls',sellPriceTpls);renderSellTemplates();
   }
 });
+*/
 function updateSellCalc(){
   let totals = {};
   let paidTotals = {};
@@ -9598,7 +10123,7 @@ function saveAll(){
 // Партнеры: динамические строки, профит на новой строке, чекбокс выплачено
 function renderPartners(){
   try {
-    const wrap=$('#partners');
+    const wrap=$('#partnersContent');
     
     // Инициализируем _prevPaidAmount для существующих строк
     partnerRows.forEach(row => {
@@ -9613,21 +10138,40 @@ function renderPartners(){
       const disabledAttr = isPaid ? 'disabled' : '';
       const disabledStyle = isPaid ? 'background:#f5f5f5;color:#888;cursor:not-allowed;' : '';
       
-      html += `<div class="row" style="margin-bottom:4px;${row.paid?'background:#e6ffe6':''}">`
-        // Новый select для участника
-        + `<div><select onchange="editPartner(${i},'participant',this.value)" ${disabledAttr} style="${disabledStyle}">`
+      html += `<div style="margin-bottom:12px;padding:8px;${row.paid?'background:#e6ffe6':''}">`
+        // Первая строка: Участник и Название
+        + `<div style="margin-bottom:8px;display:flex !important;gap:8px !important;flex-wrap:nowrap !important;">`
+        + `<div style="flex:1 !important;"><select onchange="editPartner(${i},'participant',this.value)" ${disabledAttr} style="width:100%;${disabledStyle}">`
         + `<option value="">Участник</option>`
         + participants.map(p=>`<option value="${p}"${row.participant===p?' selected':''}>${p}</option>`).join('')
         + `</select></div>`
-        + `<div style="display:flex;flex-direction:column"><label style="font-size:12px;color:#666;margin-bottom:4px">Название</label><input placeholder="Название акции" value="${row.symbol||''}" onchange="editPartner(${i},'symbol',this.value)" ${disabledAttr} style="${disabledStyle}"></div>`
-        + `<div style="display:flex;flex-direction:column"><label style="font-size:12px;color:#666;margin-bottom:4px">Сумма</label><input type="number" step="0.01" placeholder="Сумма покупки" value="${row.sum||''}" onchange="editPartner(${i},'sum',this.value)" onfocus="clearZeroOnFocus(this)" ${disabledAttr} style="${disabledStyle}"></div>`
-        + `<div style="display:flex;flex-direction:column"><label style="font-size:12px;color:#666;margin-bottom:4px">Курс покупки</label><input type="number" step="0.01" placeholder="Курс покупки" value="${row.buy||''}" onchange="editPartner(${i},'buy',this.value)" onfocus="clearZeroOnFocus(this)" ${disabledAttr} style="${disabledStyle}"></div>`
-        + `<div style="display:flex;flex-direction:column"><label style="font-size:12px;color:#666;margin-bottom:4px">Курс продажи</label><input type="number" step="0.01" placeholder="Курс продажи" value="${row.sell||''}" onchange="editPartner(${i},'sell',this.value)" onfocus="clearZeroOnFocus(this)" ${disabledAttr} style="${disabledStyle}"></div>`
-        + `<div style="display:flex;flex-direction:column"><label style="font-size:12px;color:#666;margin-bottom:4px">Процент</label><input type="number" step="1" placeholder="Комиссия %" value="${row.com!==undefined&&row.com!==''?row.com:20}" onchange="editPartner(${i},'com',this.value)" onfocus="clearZeroOnFocus(this)" ${disabledAttr} style="${disabledStyle}"></div>`
-        + `<div style="display:flex;flex-direction:column"><label style="font-size:12px;color:#666;margin-bottom:4px">Выплачено $</label><input type="number" step="0.01" placeholder="0" value="${row.paidAmount||''}" onchange="editPartner(${i},'paidAmount',this.value)" style="width:100px;${disabledStyle}" onfocus="clearZeroOnFocus(this)" ${disabledAttr}></div>`
-        + `<div><input type="checkbox" ${row.paid?'checked':''} onchange="editPartner(${i},'paid',this.checked)"> Выплачено</div>`
-        + `<div><button class="btn" style="background:#eee;color:#c33" onclick="delPartner(${i})">✖</button></div>`
-        + `<div><button class="btn" style="padding:2px 10px;font-size:13px;background:#e6e6ff;color:#333;border:1px solid #b3b3f6;vertical-align:middle;" onclick="adjustPartnerQtyPrompt(${i})" ${disabledAttr}>× / ÷</button></div>`;
+        + `<div style="flex:1 !important;"><input placeholder="Название акции" value="${row.symbol||''}" onchange="editPartner(${i},'symbol',this.value)" ${disabledAttr} style="width:100%;${disabledStyle}"></div>`
+        + `</div>`
+        
+        // Вторая строка: Сумма и Курс покупки
+        + `<div style="margin-bottom:8px;display:flex !important;gap:8px !important;flex-wrap:nowrap !important;">`
+        + `<div style="flex:1 !important;"><input type="number" step="0.01" placeholder="Сумма покупки" value="${row.sum||''}" onchange="editPartner(${i},'sum',this.value)" onfocus="clearZeroOnFocus(this)" ${disabledAttr} style="width:100%;${disabledStyle}"></div>`
+        + `<div style="flex:1 !important;"><input type="number" step="0.01" placeholder="Курс покупки" value="${row.buy||''}" onchange="editPartner(${i},'buy',this.value)" onfocus="clearZeroOnFocus(this)" ${disabledAttr} style="width:100%;${disabledStyle}"></div>`
+        + `</div>`
+        
+        // Третья строка: Курс продажи и Процент
+        + `<div style="margin-bottom:8px;display:flex !important;gap:8px !important;flex-wrap:nowrap !important;">`
+        + `<div style="flex:1 !important;"><input type="number" step="0.01" placeholder="Курс продажи" value="${row.sell||''}" onchange="editPartner(${i},'sell',this.value)" onfocus="clearZeroOnFocus(this)" ${disabledAttr} style="width:100%;${disabledStyle}"></div>`
+        + `<div style="flex:1 !important;"><input type="number" step="1" placeholder="Комиссия %" value="${row.com!==undefined&&row.com!==''?row.com:20}" onchange="editPartner(${i},'com',this.value)" onfocus="clearZeroOnFocus(this)" ${disabledAttr} style="width:100%;${disabledStyle}"></div>`
+        + `</div>`
+        
+        // Четвертая строка: Выплачено $ и чекбокс
+        + `<div style="margin-bottom:8px;display:flex !important;gap:8px !important;flex-wrap:nowrap !important;">`
+        + `<div style="flex:1 !important;"><input type="number" step="0.01" placeholder="Выплачено $" value="${row.paidAmount||''}" onchange="editPartner(${i},'paidAmount',this.value)" onfocus="clearZeroOnFocus(this)" ${disabledAttr} style="width:100%;${disabledStyle}"></div>`
+        + `<div style="flex:1 !important;display:flex;align-items:center;">`
+        + `<input type="checkbox" ${row.paid?'checked':''} onchange="editPartner(${i},'paid',this.checked)"> Выплачено`
+        + `</div></div>`
+        
+        // Пятая строка: кнопки управления
+        + `<div style="margin-bottom:8px;display:flex !important;gap:8px !important;justify-content:flex-end !important;">`
+        + `<button class="btn" style="background:#eee;color:#c33;padding:4px 8px;" onclick="delPartner(${i})">✖</button>`
+        + `<button class="btn" style="padding:4px 8px;font-size:12px;background:#e6e6ff;color:#333;border:1px solid #b3b3f6;" onclick="adjustPartnerQtyPrompt(${i})" ${disabledAttr}>× / ÷</button>`
+        + `</div>`;
       html += '</div>';
       // расчет
       const sum=parseFloat(row.sum)||0, buy=parseFloat(row.buy)||0, sell=parseFloat(row.sell)||0, com=row.com!==undefined&&row.com!==''?parseFloat(row.com):20;
@@ -9635,20 +10179,37 @@ function renderPartners(){
       const effFactor = factorsArr.length ? factorsArr.reduce((a,b)=>a*(parseFloat(b)||1),1) : 1;
       const factorsLabel = factorsArr.length ? `× ${factorsArr.join(' → ')}` : '';
       const qty = (buy>0) ? (sum/buy) * effFactor : 0;
-      if(sum&&buy&&sell){
-        const sumBuy=sum, sumSell=qty*sell, sumNet=sumSell*(1-com/100), profit=sumNet-sumBuy;
-        const mult = sumBuy>0 ? (sumNet/sumBuy) : null;
-        const multStr = mult!==null ? ` <span style=\\\"color:#080\\\">(x${mult.toFixed(1)})</span>` : '';
-        // Рассчитываем количество акций с учетом комиссии
-        const qtyWithCommission = com > 0 ? Math.floor((sumBuy * (1 - com/100)) / buy) : qty;
-        const qtyText = com > 0 ? `Акций: ${fmtPretty(qty, 0)}<br>(${fmtPretty(qtyWithCommission, 0)} с учетом %)<br><br>` : `Акций: ${fmtPretty(qty, 0)}<br><br>`;
+      // Показываем расчеты поэтапно
+      if(sum && buy){
+        const sumBuy = sum;
+        let calcHtml = '';
         
-        html += `<div class=\"partner-calc\" style=\"margin:0 0 12px 0;font-size:15px;color:#444;padding-left:8px;word-break:break-word;white-space:normal\">${qtyText}Инвестируем: ${fmtPretty(sumBuy, 0)}<br>
-Сумма продажи: ${fmtPretty(sumSell, 0)}${factorsLabel?` <span style=\\\"color:#888;font-size:12px\\\">(${factorsLabel})</span>`:''}<br><br>
-Комиссия партнеру: <span style=\"color:#c33\">${fmtPretty(sumSell - sumNet, 0)}</span><br>
-Получу на руки: <span style=\"color:#226\">${fmtPretty(sumNet, 0)}</span><br><br>
-Чистая прибыль: <span style=\"color:#080;font-weight:600\">${fmtPretty(profit, 0)}</span>${multStr}
-</div>`;
+        // Всегда показываем количество акций и инвестируемую сумму
+        calcHtml += `Акций: ${fmtPretty(qty, 0)}<br>`;
+        
+        // Если есть процент комиссии, показываем акции с учетом комиссии
+        if(com > 0){
+          const qtyWithCommission = Math.floor((sumBuy * (1 - com/100)) / buy);
+          calcHtml += `(${fmtPretty(qtyWithCommission, 0)} с учетом %)<br>`;
+        }
+        
+        calcHtml += `<br>Инвестируем: ${fmtPretty(sumBuy, 0)}<br>`;
+        
+        // Если есть курс продажи, показываем полные расчеты
+        if(sell){
+          const sumSell = qty * sell;
+          const sumNet = sumSell * (1 - com/100);
+          const profit = sumNet - sumBuy;
+          const mult = sumBuy > 0 ? (sumNet/sumBuy) : null;
+          const multStr = mult !== null ? ` <span style="color:#080">(x${mult.toFixed(1)})</span>` : '';
+          
+          calcHtml += `Сумма продажи: ${fmtPretty(sumSell, 0)}${factorsLabel?` <span style="color:#888;font-size:12px">(${factorsLabel})</span>`:''}<br><br>
+Комиссия партнеру: <span style="color:#c33">${fmtPretty(sumSell - sumNet, 0)}</span><br>
+Получу на руки: <span style="color:#226">${fmtPretty(sumNet, 0)}</span><br><br>
+Чистая прибыль: <span style="color:#080;font-weight:600">${fmtPretty(profit, 0)}</span>${multStr}`;
+        }
+        
+        html += `<div class="partner-calc" style="margin:0 0 12px 0;font-size:15px;color:#444;padding-left:8px;word-break:break-word;white-space:normal">${calcHtml}</div>`;
 
         // Добавляем кнопку "Показать текст/Скрыть текст" и тумблер "Ком%"
         const owner = (localStorage.getItem('cf_owner') || (participants[0]||'') || '').trim();
@@ -10886,8 +11447,8 @@ function saveTimerSounds() {
 
 // Загрузка настроек звуков таймера
 function loadTimerSounds() {
-  const sound15 = localStorage.getItem('cf_timer15Sound') || 'playSound4';
-  const sound7 = localStorage.getItem('cf_timer7Sound') || 'playSound3';
+  const sound15 = localStorage.getItem('cf_timer15Sound') || 'playSound3';
+  const sound7 = localStorage.getItem('cf_timer7Sound') || 'playSound6';
   const sound3 = localStorage.getItem('cf_timer3Sound') || 'playBeep';
   const soundStart = localStorage.getItem('cf_timerStartSound') || 'playBong';
   
@@ -10904,6 +11465,18 @@ function loadTimerSounds() {
 
 // Инициализация настроек звуков при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
+  // Сброс старых настроек звука на новые значения по умолчанию
+  try {
+    const current15 = localStorage.getItem('cf_timer15Sound');
+    const currentStart = localStorage.getItem('cf_timerStartSound');
+    
+    if (!current15 || current15 === 'playBong') {
+      localStorage.setItem('cf_timer15Sound', 'playSound3');
+    }
+    if (!currentStart) {
+      localStorage.setItem('cf_timerStartSound', 'playBong');
+    }
+  } catch {}
   try { loadTimerSounds(); } catch {}
 });
 
@@ -10923,7 +11496,7 @@ function getTimerSoundFunction(soundName) {
     'playSound10': playSound10,
     'playBeep': playBeep
   };
-  return soundFunctions[soundName] || playBong;
+  return soundFunctions[soundName] || playSound3;
 }
 
 // Автопрокрутка к полям Легкой покупки при вводе, чтобы поле было видно
@@ -11583,91 +12156,8 @@ function renderHistory() {
         const holder = document.createElement('div');
         holder.style.margin = '6px 0 10px 0';
         holder.id = 'timerSoundControls';
-        holder.innerHTML = `
-          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-            <div style="display:flex;align-items:center;gap:6px">
-              <label style="font-size:13px;color:#666">Старт</label>
-              <select id="timerStartSound" style="padding:4px 6px;font-size:13px">
-                <option value="playBong">Гонг</option>
-                <option value="playBeep">Бип</option>
-                <option value="playSound1">Тревога 1</option>
-                <option value="playSound2">Тревога 2</option>
-                <option value="playSound3">Тревога 3</option>
-                <option value="playSound4">Тревога 4</option>
-                <option value="playSound5">Тревога 5</option>
-                <option value="playSound6">Тревога 6</option>
-                <option value="playSound7">Тревога 7</option>
-                <option value="playSound8">Тревога 8</option>
-                <option value="playSound9">Тревога 9</option>
-                <option value="playSound10">Тревога 10</option>
-              </select>
-              <button class="btn" id="testStartBtn" style="padding:4px 8px;font-size:13px">Тест старт</button>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <label style="font-size:13px;color:#666">15 сек</label>
-              <select id="timer15Sound" style="padding:4px 6px;font-size:13px">
-                <option value="playBong">Гонг</option>
-                <option value="playBeep">Бип</option>
-                <option value="playSound1">Тревога 1</option>
-                <option value="playSound2">Тревога 2</option>
-                <option value="playSound3">Тревога 3</option>
-                <option value="playSound4">Тревога 4</option>
-                <option value="playSound5">Тревога 5</option>
-                <option value="playSound6">Тревога 6</option>
-                <option value="playSound7">Тревога 7</option>
-                <option value="playSound8">Тревога 8</option>
-                <option value="playSound9">Тревога 9</option>
-                <option value="playSound10">Тревога 10</option>
-              </select>
-              <button class="btn" id="test15Btn" style="padding:4px 8px;font-size:13px">Тест 15с</button>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <label style="font-size:13px;color:#666">7 сек</label>
-              <select id="timer7Sound" style="padding:4px 6px;font-size:13px">
-                <option value="playBong">Гонг</option>
-                <option value="playBeep">Бип</option>
-                <option value="playSound1">Тревога 1</option>
-                <option value="playSound2">Тревога 2</option>
-                <option value="playSound3">Тревога 3</option>
-                <option value="playSound4">Тревога 4</option>
-                <option value="playSound5">Тревога 5</option>
-                <option value="playSound6">Тревога 6</option>
-                <option value="playSound7">Тревога 7</option>
-                <option value="playSound8">Тревога 8</option>
-                <option value="playSound9">Тревога 9</option>
-                <option value="playSound10">Тревога 10</option>
-              </select>
-              <button class="btn" id="test7Btn" style="padding:4px 8px;font-size:13px">Тест 7с</button>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <label style="font-size:13px;color:#666">3 сек</label>
-              <select id="timer3Sound" style="padding:4px 6px;font-size:13px">
-                <option value="playBong">Гонг</option>
-                <option value="playBeep">Бип</option>
-                <option value="playSound1">Тревога 1</option>
-                <option value="playSound2">Тревога 2</option>
-                <option value="playSound3">Тревога 3</option>
-                <option value="playSound4">Тревога 4</option>
-                <option value="playSound5">Тревога 5</option>
-                <option value="playSound6">Тревога 6</option>
-                <option value="playSound7">Тревога 7</option>
-                <option value="playSound8">Тревога 8</option>
-                <option value="playSound9">Тревога 9</option>
-                <option value="playSound10">Тревога 10</option>
-              </select>
-              <button class="btn" id="test3Btn" style="padding:4px 8px;font-size:13px">Тест 3с</button>
-            </div>
-            <div>
-              <button class="btn" id="timerSoundsSaveBtn" style="padding:4px 10px;font-size:13px">Сохранить</button>
-            </div>
-          </div>`;
+        holder.innerHTML = ``;
         wrapHost.parentNode.insertBefore(holder, wrapHost);
-        try { loadTimerSounds(); } catch {}
-        const saveBtn = byId('timerSoundsSaveBtn'); if (saveBtn) saveBtn.onclick = ()=>{ try{ saveTimerSounds(); showToast('Сохранено'); }catch{} };
-        const tStart = byId('testStartBtn'); if (tStart) tStart.onclick = ()=> playSelected('timerStartSound');
-        const t15 = byId('test15Btn'); if (t15) t15.onclick = ()=> playSelected('timer15Sound');
-        const t7 = byId('test7Btn'); if (t7) t7.onclick = ()=> playSelected('timer7Sound');
-        const t3 = byId('test3Btn'); if (t3) t3.onclick = ()=> playSelected('timer3Sound');
       }
     }
   }catch{}
@@ -12208,28 +12698,68 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
           } catch {}
           
           if (dollarActive) {
-            // Зеленый цвет когда доллар активен (приоритет выше красного)
+            // Зеленый имеет наивысший приоритет
             ring.style.stroke = '#22C55E';
-          } else if (remaining <= 15) {
-            // Красный цвет когда остается 15 секунд или меньше
+          } else if (remaining <= 3) {
+            // 3 сек — красный
             ring.style.stroke = '#ef4444';
+          } else if (remaining <= 7) {
+            // 7 сек — оранжевый
+            ring.style.stroke = '#fb923c';
+          } else if (remaining <= 15) {
+            // 15 сек — желтый
+            ring.style.stroke = '#FDE047';
           } else {
-            // Синий цвет по умолчанию
+            // По умолчанию — синий
             ring.style.stroke = '#4a90e2';
           }
         }
       }
-      function resetTimer(){
-        duration = getTimerDuration();
-        remaining = duration;
-        bongPlayed = false;
-        beepPlayed = false;
-        alarm3Played = false;
-        setPaused(true); // после сброса — на паузе
-        updateRing();
-        if (playBtn) playBtn.style.display = 'inline-flex';
-        if (text) text.style.display = 'none';
-      }
+ function resetTimer(){
+   duration = getTimerDuration();
+   remaining = duration;
+   bongPlayed = false;
+   beepPlayed = false;
+   alarm3Played = false;
+   alarm2Played = false;
+   alarm1Played = false;
+   setPaused(true); // после сброса — на паузе
+   updateRing();
+   if (playBtn) playBtn.style.display = 'inline-flex';
+   if (text) text.style.display = 'none';
+   
+   // Принудительно восстанавливаем состояние всех кнопок таймера
+   if (resetBtnLeft) {
+     resetBtnLeft.style.pointerEvents = 'auto';
+     resetBtnLeft.style.cursor = 'pointer';
+     resetBtnLeft.disabled = false;
+     resetBtnLeft.style.opacity = '1';
+     resetBtnLeft.style.display = 'inline-flex';
+     resetBtnLeft.style.visibility = 'visible';
+   }
+   if (playBtn) {
+     playBtn.style.pointerEvents = 'auto';
+     playBtn.style.cursor = 'pointer';
+     playBtn.disabled = false;
+     playBtn.style.opacity = '1';
+     playBtn.style.display = 'inline-flex';
+     playBtn.style.visibility = 'visible';
+   }
+   if (pauseBtn) {
+     pauseBtn.style.pointerEvents = 'auto';
+     pauseBtn.style.cursor = 'pointer';
+     pauseBtn.disabled = false;
+     pauseBtn.style.opacity = '1';
+     pauseBtn.style.visibility = 'visible';
+   }
+   
+   // Перепривязываем обработчики событий для надежности
+   try {
+     if (typeof bindResetHandler === 'function') bindResetHandler();
+     if (typeof bindPauseHandler === 'function') bindPauseHandler();
+     if (typeof bindPlayHandler === 'function') bindPlayHandler();
+   } catch {}
+ }
       // After first click on timer, clicking it will not pause; it toggles controls visibility
       let controlsPinned = false;
 
@@ -12299,19 +12829,19 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
           master.gain.value = 1.0;
           master.connect(ctx.destination);
           
-          // Простой бип на 800 Гц длительностью 2 секунды
+          // Короткий бип на 800 Гц длительностью 0.2 секунды
           const beep = ctx.createOscillator();
           beep.type = 'sine';
           beep.frequency.setValueAtTime(800, ctx.currentTime);
           
           const beepGain = ctx.createGain();
           beepGain.gain.setValueAtTime(0.001, ctx.currentTime);
-          beepGain.gain.exponentialRampToValueAtTime(0.8, ctx.currentTime + 0.1);
-          beepGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.0);
+          beepGain.gain.exponentialRampToValueAtTime(0.8, ctx.currentTime + 0.05);
+          beepGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
           
           beep.connect(beepGain).connect(master);
           beep.start();
-          beep.stop(ctx.currentTime + 2.0);
+          beep.stop(ctx.currentTime + 0.2);
         }catch{}
       }
       
@@ -12379,7 +12909,7 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
         }catch{}
       }
       
-      function playSound3() { // Двойной сигнал тревоги
+      function playSound3() { // Двойной сигнал тревоги (3 повтора)
         try{
           let ctx = window._gongCtx;
           const Ctx = (window.AudioContext || window.webkitAudioContext);
@@ -12390,8 +12920,8 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
           master.gain.value = 1.0;
           master.connect(ctx.destination);
           
-          // Чередующиеся тоны
-          for (let i = 0; i < 4; i++) {
+          // Чередующиеся тоны — 3 раза
+          for (let i = 0; i < 3; i++) {
             const osc1 = ctx.createOscillator();
             osc1.type = 'sine';
             osc1.frequency.setValueAtTime(400, ctx.currentTime + i * 0.4);
@@ -12655,8 +13185,17 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
       try { window.playSound9 = playSound9; } catch {}
       try { window.playSound10 = playSound10; } catch {}
       
-      // Экспортируем функцию сброса таймера в глобальную область
-      try { window.resetGlobalTimer = resetTimer; } catch {}
+      // Экспортируем функции таймера в глобальную область
+      try { 
+        window.resetGlobalTimer = resetTimer; 
+        window.reinitTimerHandlers = function() {
+          try {
+            if (typeof bindResetHandler === 'function') bindResetHandler();
+            if (typeof bindPauseHandler === 'function') bindPauseHandler();
+            if (typeof bindPlayHandler === 'function') bindPlayHandler();
+          } catch {}
+        };
+      } catch {}
 
       // История: переназначаем кнопку "Тревога 3" на корректный звук (playSound3)
       try{
@@ -12676,8 +13215,10 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
         }, true);
       }catch{}
 
-      // Одноразовый флаг для тревоги на 3 сек
+      // Одноразовые флаги для тревог 3/2/1 сек
       let alarm3Played = false;
+      let alarm2Played = false;
+      let alarm1Played = false;
 
       function tick(){
         const now = Date.now();
@@ -12691,19 +13232,32 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
           // Надежные триггеры по факту пересечения порогов (устойчиво к пропущенным кадрам)
           if (!bongPlayed && prev > 15 && remaining <= 15) {
             bongPlayed = true;
-            const sound15 = localStorage.getItem('cf_timer15Sound') || 'playBong';
+            const sound15 = localStorage.getItem('cf_timer15Sound') || 'playSound3';
             const soundFunc15 = getTimerSoundFunction(sound15);
             if (soundFunc15) soundFunc15();
           }
           if (!beepPlayed && prev > 7 && remaining <= 7) {
             beepPlayed = true;
-            const sound7 = localStorage.getItem('cf_timer7Sound') || 'playSound3';
+            const sound7 = localStorage.getItem('cf_timer7Sound') || 'playSound6';
             const soundFunc7 = getTimerSoundFunction(sound7);
             if (soundFunc7) soundFunc7();
           }
           if (!alarm3Played && prev > 3 && remaining <= 3) {
             alarm3Played = true;
             const sound3 = localStorage.getItem('cf_timer3Sound') || 'playBeep'; // 3 сек: по умолчанию БИП
+            const soundFunc3 = getTimerSoundFunction(sound3);
+            if (soundFunc3) soundFunc3();
+          }
+          // Дополнительные сигналы на 2 и 1 сек — используем тот же выбранный звук, что и для 3 сек
+          if (!alarm2Played && prev > 2 && remaining <= 2) {
+            alarm2Played = true;
+            const sound3 = localStorage.getItem('cf_timer3Sound') || 'playBeep';
+            const soundFunc3 = getTimerSoundFunction(sound3);
+            if (soundFunc3) soundFunc3();
+          }
+          if (!alarm1Played && prev > 1 && remaining <= 1) {
+            alarm1Played = true;
+            const sound3 = localStorage.getItem('cf_timer3Sound') || 'playBeep';
             const soundFunc3 = getTimerSoundFunction(sound3);
             if (soundFunc3) soundFunc3();
           }
@@ -12740,7 +13294,15 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
           showControls(true);
         }
       });
-      pauseBtn.addEventListener('click', (e)=>{ 
+      // Функция для привязки обработчика паузы
+      function bindPauseHandler() {
+        if (pauseBtn) {
+          pauseBtn.removeEventListener('click', handlePauseClick);
+          pauseBtn.addEventListener('click', handlePauseClick);
+        }
+      }
+      
+      function handlePauseClick(e) { 
         e.stopPropagation(); 
         controlsPinned = true; 
         clearTimeout(controlsHideId); 
@@ -12750,8 +13312,20 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
         // Записываем в историю ходов управление таймером
         try{ addTurnEventForCurrentTurn(0, `Таймер: ${!paused ? 'Пауза' : 'Старт'}`); }catch{}
         try{ renderTurnsHistory(); }catch{}
-      });
-      resetBtnLeft.addEventListener('click', (e)=>{ 
+      }
+      
+      bindPauseHandler();
+      // Функция для привязки обработчика сброса (чтобы можно было переприменить)
+      function bindResetHandler() {
+        if (resetBtnLeft) {
+          // Удаляем старые обработчики
+          resetBtnLeft.removeEventListener('click', handleResetClick);
+          // Добавляем новый обработчик
+          resetBtnLeft.addEventListener('click', handleResetClick);
+        }
+      }
+      
+      function handleResetClick(e) {
         e.stopPropagation(); 
         controlsPinned = true; 
         clearTimeout(controlsHideId); 
@@ -12766,7 +13340,16 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
         // Записываем в историю ходов сброс таймера
         try{ addTurnEventForCurrentTurn(0, 'Таймер: Сброс'); }catch{}
         try{ renderTurnsHistory(); }catch{}
-      });
+      }
+      
+      bindResetHandler();
+      
+      // Дополнительная проверка: убеждаемся, что кнопка сброса всегда доступна
+      if (resetBtnLeft) {
+        resetBtnLeft.style.pointerEvents = 'auto';
+        resetBtnLeft.style.cursor = 'pointer';
+        resetBtnLeft.disabled = false;
+      }
       if (playBtn) {
         playBtn.style.display = 'inline-flex';
         // При первом расчёте фиксируем wrap как относительно позиционированный и не меняем его координаты при клике
@@ -12774,27 +13357,38 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
         if (style.position === 'static') wrap.style.position = 'fixed';
         wrap.style.top = wrap.style.top || '12px';
         wrap.style.right = wrap.style.right || '12px';
-        playBtn.addEventListener('click', (e)=>{ 
+        // Функция для привязки обработчика play
+        function bindPlayHandler() {
+          if (playBtn) {
+            playBtn.removeEventListener('click', handlePlayClick);
+            playBtn.addEventListener('click', handlePlayClick);
+          }
+        }
+        
+        function handlePlayClick(e) { 
           e.stopPropagation(); 
             if (remaining<=0) { 
               duration = getTimerDuration(); 
               remaining = duration; 
-              // Сбрасываем одноразовые флаги звуков при рестарте без крестика
-              bongPlayed = false; 
-              beepPlayed = false; 
-              try { alarm3Played = false; } catch {}
+               // Сбрасываем одноразовые флаги звуков при рестарте без крестика
+               bongPlayed = false; 
+               beepPlayed = false; 
+               try { alarm3Played = false; alarm2Played = false; alarm1Played = false; } catch {}
             } 
           if (text) text.style.display=''; 
           setPaused(false); 
-            // Звук запуска — отдельная настройка (по умолчанию Гонг)
+            // Звук запуска — отдельная настройка (по умолчанию Гонг) и отдельный тумблер
             const startSound = localStorage.getItem('cf_timerStartSound') || 'playBong';
             const startFunc = getTimerSoundFunction(startSound);
-            if (startFunc) startFunc();
+            const startSoundEnabled = (localStorage.getItem('cf_timerStartSoundEnabled') !== '0');
+            if (startFunc && startSoundEnabled) startFunc();
           
           // Записываем в историю ходов запуск таймера
           try{ addTurnEventForCurrentTurn(0, 'Таймер: Запуск'); }catch{}
           try{ renderTurnsHistory(); }catch{}
-        });
+        }
+        
+        bindPlayHandler();
       }
       // Dragging (mouse + touch)
       (function(){
@@ -13463,6 +14057,34 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
                 localStorage.setItem('cf_timer_duration_sec', String(vv));
                 showToast(`Таймер: ${vv} сек`);
               }catch{}
+            });
+          }
+          // Переключатель "Звук старта" в правом верхнем углу большого таймера
+          if (host && !document.getElementById('movesTimerStartSoundWrap')){
+            host.style.position = host.style.position || 'relative';
+            const wrapLbl = document.createElement('label');
+            wrapLbl.id = 'movesTimerStartSoundWrap';
+            wrapLbl.style.position = 'absolute';
+            wrapLbl.style.right = '8px';
+            wrapLbl.style.top = '8px';
+            wrapLbl.style.display = 'flex';
+            wrapLbl.style.alignItems = 'center';
+            wrapLbl.style.gap = '6px';
+            wrapLbl.style.fontSize = '12px';
+            wrapLbl.style.background = '#fff';
+            wrapLbl.style.border = '1px solid #ddd';
+            wrapLbl.style.borderRadius = '8px';
+            wrapLbl.style.padding = '4px 8px';
+            if (localStorage.getItem('cf_timerStartSoundEnabled') === null){
+              try{ localStorage.setItem('cf_timerStartSoundEnabled', '1'); }catch{}
+            }
+            const enabled = (localStorage.getItem('cf_timerStartSoundEnabled') !== '0');
+            wrapLbl.innerHTML = `<input type="checkbox" id="movesStartSoundToggle" ${enabled? 'checked':''} style="width:16px;height:16px">`+
+                                `<span style="color:#444;user-select:none;">Звук старта</span>`;
+            host.appendChild(wrapLbl);
+            const chk = wrapLbl.querySelector('#movesStartSoundToggle');
+            chk.addEventListener('change', ()=>{
+              try{ localStorage.setItem('cf_timerStartSoundEnabled', chk.checked ? '1' : '0'); }catch{}
             });
           }
         }catch{}
@@ -14922,14 +15544,19 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
           }
         }
       }
-      const sum = parseFloat(document.getElementById('partnerSum')?.value || '0');
-      const buy = parseFloat(document.getElementById('partnerBuy')?.value || '0');
-      const sell = parseFloat(document.getElementById('partnerSell')?.value || '0');
-      const com = parseFloat(document.getElementById('partnerCom')?.value || '20');
+      // Закомментировано, так как элементы партнеров теперь создаются динамически
+      // Расчеты теперь происходят в функции renderPartners()
+      const sum = 0; // parseFloat(document.getElementById('partnerSum')?.value || '0');
+      const buy = 0; // parseFloat(document.getElementById('partnerBuy')?.value || '0');
+      const sell = 0; // parseFloat(document.getElementById('partnerSell')?.value || '0');
+      const com = 20; // parseFloat(document.getElementById('partnerCom')?.value || '20');
       
-      const resultEl = document.getElementById('partnerResult');
-      if (!resultEl) return;
+      // Закомментировано, так как элемент partnerResult больше не существует
+      // const resultEl = document.getElementById('partnerResult');
+      // if (!resultEl) return;
       
+      // Закомментировано, так как расчеты теперь происходят в renderPartners()
+      /*
       if (sum && buy && sell) {
         const qty = sum / buy;
         const sumSell = qty * sell;
@@ -15047,6 +15674,7 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
       } else {
         resultEl.innerHTML = '<div style="margin-top:12px;color:#666;font-style:italic;">Введите все данные для расчета</div>';
       }
+      */
     } catch (e) {
       console.error('Ошибка в updatePartnerResult:', e);
     }
@@ -15069,6 +15697,7 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
         try{ prevSetActive(tabId); }catch{}
         if (tabId === 'tabHistory') { try{ renderBalanceChart(); }catch{} }
         if (tabId === 'tabMoves') { try{ placeEasyBuyAtBottom(); }catch{} }
+        if (tabId === 'tabParticipants') { try{ ensureTimerSoundControlsAlways(); }catch{} }
       };
     }catch{}
     // Лёгкая обёртка для вызова графика после перерисовки истории/ходов
@@ -15251,6 +15880,188 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
     restoreFinancialPanelState();
   });
 
+  // Защита от удаления защищенных элементов
+  (function protectElements() {
+    const originalRemoveChild = Node.prototype.removeChild;
+    const originalRemove = Element.prototype.remove;
+    const originalInnerHTML = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+    const originalReplaceWith = Element.prototype.replaceWith;
+    const originalTextContent = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent');
+    
+    Node.prototype.removeChild = function(child) {
+      if (child && (child.hasAttribute && child.hasAttribute('data-protected')) || 
+          (child.querySelector && child.querySelector('[data-protected]'))) {
+        console.log('Защищенный элемент не может быть удален:', child);
+        return child;
+      }
+      return originalRemoveChild.call(this, child);
+    };
+    
+    Element.prototype.remove = function() {
+      if (this.hasAttribute && this.hasAttribute('data-protected') ||
+          (this.querySelector && this.querySelector('[data-protected]'))) {
+        console.log('Защищенный элемент не может быть удален:', this);
+        return;
+      }
+      return originalRemove.call(this);
+    };
+    
+    Element.prototype.replaceWith = function(...nodes) {
+      if (this.hasAttribute && this.hasAttribute('data-protected') ||
+          (this.querySelector && this.querySelector('[data-protected]'))) {
+        console.log('Защищенный элемент не может быть заменен:', this);
+        return;
+      }
+      return originalReplaceWith.apply(this, nodes);
+    };
+    
+    // Защита от очистки innerHTML защищенных контейнеров
+    Object.defineProperty(Element.prototype, 'innerHTML', {
+      set: function(value) {
+        if (this.hasAttribute && this.hasAttribute('data-protected') ||
+            (this.querySelector && this.querySelector('[data-protected]'))) {
+          console.log('Защищенный контейнер не может быть очищен:', this);
+          return;
+        }
+        originalInnerHTML.set.call(this, value);
+      },
+      get: originalInnerHTML.get
+    });
+    
+    // Дополнительная защита от изменения textContent
+    Object.defineProperty(Node.prototype, 'textContent', {
+      set: function(value) {
+        if (this.hasAttribute && this.hasAttribute('data-protected') ||
+            (this.querySelector && this.querySelector('[data-protected]'))) {
+          console.log('Защищенный элемент не может быть изменен через textContent:', this);
+          return;
+        }
+        originalTextContent.set.call(this, value);
+      },
+      get: originalTextContent.get
+    });
+    
+    // Защита от удаления через querySelector и затем remove
+    const originalQuerySelector = Document.querySelector;
+    const originalQuerySelectorAll = Document.querySelectorAll;
+    
+    // Мониторим попытки удаления защищенных элементов
+    setInterval(() => {
+      const protectedElements = document.querySelectorAll('[data-protected]');
+      protectedElements.forEach(el => {
+        if (!document.contains(el)) {
+          console.error('Защищенный элемент был удален! Восстанавливаем...', el);
+          // Попытаемся восстановить элемент
+          const holder = document.getElementById('timerSoundsHolder');
+          if (holder && !document.contains(holder)) {
+            const alarmButtons = document.getElementById('alarmButtonsRow');
+            if (alarmButtons) {
+              alarmButtons.parentNode.insertBefore(holder, alarmButtons.nextSibling);
+            }
+          }
+        }
+      });
+    }, 1000);
+  })();
+
+  // Функция для создания кнопок управления звуком (всегда)
+  function ensureTimerSoundControlsAlways(){
+    try{
+      // Кнопки звука теперь статические в HTML, просто инициализируем их обработчики
+      initTimerSoundControls();
+      return;
+    }catch{}
+  }
+
+  // Глобальная панель настроек звуков таймера (всегда доступна при загрузке)
+  (function ensureTimerSoundControls(){
+    try{
+      ensureTimerSoundControlsAlways();
+    }catch{}
+  })();
+
+  // Дополнительно вызываем создание кнопок при загрузке DOM
+  document.addEventListener('DOMContentLoaded', function() {
+    try{
+      ensureTimerSoundControlsAlways();
+    }catch{}
+  });
+
+  // Инициализация кнопок управления звуком (для HTML-элементов)
+  function initTimerSoundControls() {
+    try {
+      // Вспомогательные функции
+      function byId(id){ return document.getElementById(id); }
+      
+      if (typeof window.getTimerSoundFunction !== 'function') {
+        window.getTimerSoundFunction = function(name){ try { return (typeof window[name] === 'function') ? window[name] : null; } catch { return null; } };
+      }
+      if (typeof window.loadTimerSounds !== 'function') {
+        window.loadTimerSounds = function(){
+          try{
+            const sStart = localStorage.getItem('cf_timerStartSound') || 'playBong';
+            const s15 = localStorage.getItem('cf_timer15Sound') || 'playSound3';
+            const s7 = localStorage.getItem('cf_timer7Sound') || 'playSound6';
+            const s3 = localStorage.getItem('cf_timer3Sound') || 'playBeep';
+            const map = { timerStartSound: sStart, timer15Sound: s15, timer7Sound: s7, timer3Sound: s3 };
+            Object.entries(map).forEach(([id,val])=>{ const el = byId(id); if (el) el.value = val; });
+          }catch{}
+        };
+      }
+      if (typeof window.saveTimerSounds !== 'function') {
+        window.saveTimerSounds = function(){
+          try{
+            const sStart = byId('timerStartSound')?.value || 'playBong';
+            const s15 = byId('timer15Sound')?.value || 'playSound3';
+            const s7 = byId('timer7Sound')?.value || 'playSound6';
+            const s3 = byId('timer3Sound')?.value || 'playBeep';
+            localStorage.setItem('cf_timerStartSound', sStart);
+            localStorage.setItem('cf_timer15Sound', s15);
+            localStorage.setItem('cf_timer7Sound', s7);
+            localStorage.setItem('cf_timer3Sound', s3);
+          }catch{}
+        };
+      }
+      if (typeof window.playSelected !== 'function') {
+        window.playSelected = function(selectId){
+          try{
+            const sel = byId(selectId);
+            const val = sel ? sel.value : '';
+            const f = window.getTimerSoundFunction(val);
+            if (typeof f === 'function') f();
+          }catch{}
+        };
+      }
+
+      // Загружаем сохраненные настройки
+      try { window.loadTimerSounds(); } catch {}
+      
+      // Настраиваем обработчики событий
+      const saveBtn = byId('timerSoundsSaveBtn_global'); 
+      if (saveBtn) saveBtn.onclick = ()=>{ try{ window.saveTimerSounds(); if (typeof showToast==='function') showToast('Сохранено'); }catch{} };
+      
+      const tStart = byId('testStartBtn_global'); 
+      if (tStart) tStart.onclick = ()=> window.playSelected('timerStartSound');
+      
+      const t15 = byId('test15Btn_global'); 
+      if (t15) t15.onclick = ()=> window.playSelected('timer15Sound');
+      
+      const t7 = byId('test7Btn_global'); 
+      if (t7) t7.onclick = ()=> window.playSelected('timer7Sound');
+      
+      const t3 = byId('test3Btn_global'); 
+      if (t3) t3.onclick = ()=> window.playSelected('timer3Sound');
+      
+    } catch {}
+  }
+
+  // Вызываем инициализацию при загрузке DOM
+  document.addEventListener('DOMContentLoaded', function() {
+    try{
+      initTimerSoundControls();
+    }catch{}
+  });
+
   // Обновляем панель при изменении данных
   const originalRecalcLedgerTotals = window.recalcLedgerTotals;
   window.recalcLedgerTotals = function() {
@@ -15411,6 +16222,1798 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
     try{ showToast(`Ход ${turn} завершен (принудительно)`, 500); }catch{}
   }
 
-  </script>
+  // Функциональность для раздела Союз
+  let unionCounter = 0;
+  let unions = []; // Массив для хранения данных союзов
+  
+  // Функции для сохранения и загрузки союзов
+  function saveUnions() {
+    try {
+      console.log('Saving unions to localStorage:', unions);
+      localStorage.setItem('cf_unions', JSON.stringify(unions));
+      localStorage.setItem('cf_unionCounter', unionCounter.toString());
+      console.log('Unions saved successfully');
+    } catch (e) {
+      console.error('Ошибка сохранения союзов:', e);
+    }
+  }
+  
+  function loadUnions() {
+    try {
+      const savedUnions = localStorage.getItem('cf_unions');
+      const savedCounter = localStorage.getItem('cf_unionCounter');
+      
+      console.log('Loading unions from localStorage:', savedUnions);
+      
+      if (savedUnions) {
+        unions = JSON.parse(savedUnions);
+        console.log('Loaded unions:', unions);
+      }
+      
+      if (savedCounter) {
+        unionCounter = parseInt(savedCounter);
+      }
+      
+      // Восстанавливаем союзы
+      renderUnions();
+    } catch (e) {
+      console.error('Ошибка загрузки союзов:', e);
+      unions = [];
+      unionCounter = 0;
+    }
+  }
+  
+  function renderUnions() {
+    const unionsContainer = document.getElementById('unionsContainer');
+    if (!unionsContainer) return;
+    
+    // Очищаем контейнер
+    unionsContainer.innerHTML = '';
+    
+    // Восстанавливаем каждый союз
+    unions.forEach(union => {
+      const template = document.getElementById('unionDialogTemplate');
+      const newUnion = template.cloneNode(true);
+      newUnion.id = `union-${union.id}`;
+      newUnion.style.display = 'block';
+      
+      // Создаем содержимое диалога
+      const content = newUnion.querySelector('.union-content');
+      content.innerHTML = createUnionDialogContent(union.id);
+      
+      // Добавляем в контейнер
+      unionsContainer.appendChild(newUnion);
+      
+      // Восстанавливаем состояние союза после добавления в DOM
+      setTimeout(() => {
+        restoreUnionState(union);
+      }, 100);
+    });
+  }
+  
+  function saveUnionState(unionId, step, value) {
+    const union = unions.find(u => u.id === unionId);
+    if (union) {
+      if (!union.state) union.state = {};
+      union.state[step] = value;
+      union.state.timestamp = new Date().toISOString();
+      saveUnions();
+    }
+  }
+  
+  function savePlayerName(unionId) {
+    const nameInput = document.getElementById(`playerName-${unionId}`);
+    const union = unions.find(u => u.id === unionId);
+    if (union && nameInput) {
+      union.playerName = nameInput.value;
+      try {
+        // Записываем только если значение имени изменилось относительно последней записи name_input
+        const seq = Array.isArray(union.sequence) ? union.sequence : [];
+        const lastName = [...seq].reverse().find(s => s.action === 'name_input');
+        if (!lastName || (lastName && lastName.value !== nameInput.value)) {
+          addToSequence(unionId, 'name_input', nameInput.value);
+        }
+      } catch {}
+      saveUnions();
+    }
+  }
+  
+  function addToSequence(unionId, action, value) {
+    const union = unions.find(u => u.id === unionId);
+    if (union) {
+      if (!union.sequence) union.sequence = [];
+      union.sequence.push({
+        action: action,
+        value: value,
+        timestamp: new Date().toISOString()
+      });
+      // Persist immediately so actions survive reloads
+      try { saveUnions(); } catch {}
+    }
+  }
+  
+  function restoreUnionState(union) {
+    console.log('Restoring union state for union:', union.id, union);
+    
+    // Восстанавливаем состояние полей
+    if (union.playerName) {
+      const nameInput = document.getElementById(`playerName-${union.id}`);
+      if (nameInput) {
+        nameInput.value = union.playerName;
+        nameInput.style.display = 'block'; // Убеждаемся, что поле видно
+        console.log('Restored player name:', union.playerName);
+      } else {
+        console.log('Name input not found for union:', union.id);
+        // Попробуем найти через другой селектор
+        const nameInput2 = document.querySelector(`#union-${union.id} input[placeholder*="имя"]`);
+        if (nameInput2) {
+          nameInput2.value = union.playerName;
+          nameInput2.style.display = 'block';
+          console.log('Found name input via alternative selector');
+        }
+      }
+    }
+    
+    // Восстанавливаем подпись
+    if (union.signature || union.signatureHTML) {
+      console.log('Attempting to restore signature for union:', union.id, 'signature:', union.signature, 'signatureHTML:', union.signatureHTML);
+      
+      // Попробуем найти область подписи несколько раз с задержкой
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      const tryRestoreSignature = () => {
+        const signatureArea = document.getElementById(`signatureArea-${union.id}`);
+        console.log('Looking for signature area:', `signatureArea-${union.id}`, 'found:', !!signatureArea);
+        
+        if (signatureArea) {
+          // Проверяем, есть ли HTML версия подписи
+          if (union.signatureHTML) {
+            console.log('Restoring signatureHTML for union:', union.id);
+            // Используем HTML версию для восстановления (ожидаем <img ...>)
+            signatureArea.innerHTML = union.signatureHTML;
+            const img = signatureArea.querySelector('img');
+            if (img) {
+              img.style.pointerEvents = 'none';
+              img.style.opacity = '0.7';
+              img.style.background = '#f8f9fa';
+            }
+          } else if (union.signature && union.signature.includes('<canvas')) {
+            console.log('Restoring old format signature for union:', union.id);
+            // Если это старый формат с canvas в HTML
+            signatureArea.innerHTML = union.signature;
+            const img = signatureArea.querySelector('img');
+            if (img) {
+              img.style.pointerEvents = 'none';
+              img.style.opacity = '0.7';
+              img.style.background = '#f8f9fa';
+            }
+          } else if (union.signature && union.signature.startsWith('data:image/')) {
+            console.log('Restoring data URL signature for union:', union.id);
+            // Если это data URL, отображаем как <img>
+            const img = document.createElement('img');
+            img.src = union.signature;
+            img.alt = 'signature';
+            img.style.maxWidth = '100%';
+            img.style.height = '60px';
+            img.style.objectFit = 'contain';
+            img.style.border = '1px solid #ccc';
+            img.style.borderRadius = '4px';
+            img.style.pointerEvents = 'none';
+            img.style.opacity = '0.7';
+            img.style.background = '#f8f9fa';
+            signatureArea.innerHTML = '';
+            signatureArea.appendChild(img);
+          } else if (union.signature) {
+            console.log('Restoring text signature for union:', union.id);
+            // Если это обычный текст, показываем его
+            signatureArea.innerHTML = union.signature;
+          }
+          console.log('Successfully restored signature for union:', union.id);
+        } else if (attempts < maxAttempts) {
+          console.log('Signature area not found, retrying...', attempts + 1, 'of', maxAttempts);
+          attempts++;
+          setTimeout(tryRestoreSignature, 50);
+        } else {
+          console.log('Signature area not found after', maxAttempts, 'attempts for union:', union.id);
+        }
+      };
+      
+      tryRestoreSignature();
+    }
+    
+    // Восстанавливаем состояние на основе последовательности действий
+    if (union.sequence && union.sequence.length > 0) {
+      console.log('Restoring sequence for union:', union.id, union.sequence);
+      
+      // Сначала блокируем все кнопки выбора
+      const choice1Buttons = document.querySelectorAll(`#union-${union.id} [data-group="choice1"]`);
+      console.log('Found choice1 buttons:', choice1Buttons.length);
+      choice1Buttons.forEach(btn => {
+        btn.classList.add('disabled');
+        btn.disabled = true;
+      });
+      
+      // Восстанавливаем каждый шаг последовательности
+      union.sequence.forEach((step, index) => {
+        console.log(`Processing step ${index + 1}:`, step.action, step.value);
+        switch(step.action) {
+          case 'choice':
+            if (step.value === 'trust') {
+              const trustBtn = document.querySelector(`#union-${union.id} [onclick*="handleUnionChoice(${union.id}, 'trust')"]`);
+              console.log('Looking for trust button:', trustBtn);
+              if (trustBtn) {
+                trustBtn.classList.add('selected');
+                trustBtn.classList.remove('disabled');
+                trustBtn.disabled = false;
+                console.log('Selected trust button');
+              }
+            } else if (step.value === 'self') {
+              const selfBtn = document.querySelector(`#union-${union.id} [onclick*="handleUnionChoice(${union.id}, 'self')"]`);
+              console.log('Looking for self button:', selfBtn);
+              if (selfBtn) {
+                selfBtn.classList.add('selected');
+                selfBtn.classList.remove('disabled');
+                selfBtn.disabled = false;
+                console.log('Selected self button');
+              }
+            }
+            break;
+            
+          case 'trust_percent':
+            const trustPercentDiv = document.getElementById(`union-${union.id}-trust-percent`);
+            if (trustPercentDiv) {
+              trustPercentDiv.classList.remove('union-hidden');
+              // Блокируем кнопки процентов
+              const trustButtons = document.querySelectorAll(`#union-${union.id} [data-group="trust"]`);
+              trustButtons.forEach(btn => {
+                btn.classList.add('disabled');
+                btn.disabled = true;
+              });
+              // Выделяем выбранный процент
+              const selectedPercentBtn = document.querySelector(`#union-${union.id} [onclick*="setTrustPercent(${union.id}, ${step.value})"]`);
+              if (selectedPercentBtn) {
+                selectedPercentBtn.classList.add('selected');
+                selectedPercentBtn.classList.remove('disabled');
+                selectedPercentBtn.disabled = false;
+              }
+            }
+            break;
+            
+          case 'hundred_percent':
+            const hundredPercentDiv = document.getElementById(`union-${union.id}-hundred-percent`);
+            if (hundredPercentDiv) {
+              hundredPercentDiv.classList.remove('union-hidden');
+              // Блокируем кнопки
+              const choice2Buttons = document.querySelectorAll(`#union-${union.id} [data-group="choice2"]`);
+              choice2Buttons.forEach(btn => {
+                btn.classList.add('disabled');
+                btn.disabled = true;
+              });
+              // Выделяем выбранную кнопку
+              const selectedBtn = document.querySelector(`#union-${union.id} [onclick*="handleHundredPercent(${union.id}, ${step.value})"]`);
+              if (selectedBtn) {
+                selectedBtn.classList.add('selected');
+                selectedBtn.classList.remove('disabled');
+                selectedBtn.disabled = false;
+              }
+            }
+            break;
+            
+          case 'password':
+            // Пароль уже введен, определяем следующий этап
+            if (step.value === 'correct') {
+              // Ищем следующий шаг в последовательности
+              const nextStep = union.sequence[index + 1];
+              if (nextStep) {
+                // Показываем соответствующий этап
+                if (nextStep.action === 'agreement') {
+                  const agreementDiv = document.getElementById(`union-${union.id}-agreement`);
+                  if (agreementDiv) agreementDiv.classList.remove('union-hidden');
+                } else if (nextStep.action === 'final_agreement') {
+                  const conditionsDiv = document.getElementById(`union-${union.id}-conditions`);
+                  if (conditionsDiv) conditionsDiv.classList.remove('union-hidden');
+                } else if (nextStep.action === 'signature') {
+                  const signatureDiv = document.getElementById(`union-${union.id}-signature`);
+                  if (signatureDiv) signatureDiv.classList.remove('union-hidden');
+                }
+              }
+            }
+            break;
+            
+          case 'agreement':
+            const agreementDiv = document.getElementById(`union-${union.id}-agreement`);
+            if (agreementDiv) {
+              agreementDiv.classList.remove('union-hidden');
+              // Блокируем кнопки
+              const choice3Buttons = document.querySelectorAll(`#union-${union.id} [data-group="choice3"]`);
+              choice3Buttons.forEach(btn => {
+                btn.classList.add('disabled');
+                btn.disabled = true;
+              });
+              // Выделяем выбранную кнопку
+              const selectedBtn = document.querySelector(`#union-${union.id} [onclick*="handleAgreement(${union.id}, ${step.value})"]`);
+              if (selectedBtn) {
+                selectedBtn.classList.add('selected');
+                selectedBtn.classList.remove('disabled');
+                selectedBtn.disabled = false;
+              }
+            }
+            break;
+            
+          case 'final_agreement':
+            const conditionsDiv = document.getElementById(`union-${union.id}-conditions`);
+            if (conditionsDiv) {
+              conditionsDiv.classList.remove('union-hidden');
+              // Блокируем кнопки
+              const choice4Buttons = document.querySelectorAll(`#union-${union.id} [data-group="choice4"]`);
+              choice4Buttons.forEach(btn => {
+                btn.classList.add('disabled');
+                btn.disabled = true;
+              });
+              // Выделяем выбранную кнопку
+              const selectedBtn = document.querySelector(`#union-${union.id} [onclick*="handleFinalAgreement(${union.id}, ${step.value})"]`);
+              if (selectedBtn) {
+                selectedBtn.classList.add('selected');
+                selectedBtn.classList.remove('disabled');
+                selectedBtn.disabled = false;
+              }
+            }
+            break;
+            
+          case 'signature':
+            const signatureDiv = document.getElementById(`union-${union.id}-signature`);
+            if (signatureDiv) {
+              signatureDiv.classList.remove('union-hidden');
+            }
+            break;
+            
+          case 'concluded':
+            const concludedDiv = document.getElementById(`union-${union.id}-concluded`);
+            if (concludedDiv) {
+              concludedDiv.classList.remove('union-hidden');
+              // Скрываем поля ввода
+              const nameInput = document.getElementById(`playerName-${union.id}`);
+              if (nameInput) {
+                nameInput.style.display = 'none';
+              }
+              // Показываем имя в readonly поле
+              const nameReadonlyInput = document.getElementById(`playerNameReadonly-${union.id}`);
+              if (nameReadonlyInput && union.playerName) {
+                nameReadonlyInput.value = union.playerName;
+                nameReadonlyInput.style.display = 'block';
+              }
+              // Делаем подпись нередактируемой
+              const signatureArea = document.getElementById(`signatureArea-${union.id}`);
+              if (signatureArea) {
+                signatureArea.style.pointerEvents = 'none';
+                signatureArea.style.opacity = '0.7';
+                signatureArea.style.background = '#f8f9fa';
+              }
+            }
+            break;
+        }
+      });
+    }
+  }
+  
+  function addUnion() {
+    unionCounter++;
+    const unionsContainer = document.getElementById('unionsContainer');
+    const template = document.getElementById('unionDialogTemplate');
+    
+    // Создаем объект союза
+    const newUnion = {
+      id: unionCounter,
+      playerName: '',
+      signature: '',
+      state: {},
+      sequence: [], // Массив для хранения последовательности действий
+      createdAt: new Date().toISOString()
+    };
+    
+    // Добавляем в массив союзов
+    unions.push(newUnion);
+    
+    // Клонируем шаблон
+    const newUnionElement = template.cloneNode(true);
+    newUnionElement.id = `union-${unionCounter}`;
+    newUnionElement.style.display = 'block';
+    
+    // Создаем содержимое диалога
+    const content = newUnionElement.querySelector('.union-content');
+    content.innerHTML = createUnionDialogContent(unionCounter);
+    
+    // Добавляем визуальный отступ в 25 строк перед каждым новым союзом,
+    // чтобы предыдущий контент не был виден выше
+    try {
+      const spacer = document.createElement('div');
+      spacer.className = 'union-spacer';
+      spacer.setAttribute('aria-hidden', 'true');
+      // Пытаемся вычислить реальную высоту строки
+      const bodyStyle = getComputedStyle(document.body);
+      let lineHeightPx = 0;
+      const lh = bodyStyle.lineHeight;
+      if (lh && lh !== 'normal') {
+        lineHeightPx = parseFloat(lh);
+      } else {
+        // fallback: ~1.2 × font-size
+        lineHeightPx = (parseFloat(bodyStyle.fontSize) || 16) * 1.2;
+      }
+      const h = Math.max(1, Math.round(lineHeightPx)) * 25; // 25 строк
+      spacer.style.height = h + 'px';
+      spacer.style.pointerEvents = 'none';
+      spacer.style.userSelect = 'none';
+      spacer.style.opacity = '0';
+      unionsContainer.appendChild(spacer);
+    } catch {}
+
+    // Добавляем в контейнер
+    unionsContainer.appendChild(newUnionElement);
+    
+    // Сохраняем союзы
+    saveUnions();
+
+    // Фиксируем показ первого текста в последовательности
+    try { addToSequence(unionCounter, 'text', 'text1'); } catch {}
+    
+    // Прокручиваем к новому союзу
+    newUnionElement.scrollIntoView({ behavior: 'smooth' });
+  }
+  
+  function createUnionDialogContent(unionId) {
+    return `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px;gap:6px;">
+        <button class="union-edit-btn" onclick="deleteUnion(${unionId})" title="Удалить союз" style="background:#dc3545;width:36px;height:36px;font-size:18px;display:flex;align-items:center;justify-content:center;">✖</button>
+      </div>
+      
+      <div class="union-text" id="union-${unionId}-text1" data-text="Если бы я сказал вам, что я профессиональный игрок и могу очень сильно усилить вас\n\nТо смогли бы вы полностью доверится моим советам\nИли вы предпочли бы действовать по-своему">
+        Если бы я сказал вам, что я профессиональный игрок и могу очень сильно усилить вас<br><br>
+        То смогли бы вы полностью доверится моим советам<br>
+        Или вы предпочли бы действовать по-своему
+      </div>
+      
+      <div class="union-buttons" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0;">
+        <button class="union-btn primary" onclick="handleUnionChoice(${unionId}, 'trust')" data-group="choice1">Могу довериться</button>
+        <button class="union-btn secondary" onclick="handleUnionChoice(${unionId}, 'self')" data-group="choice1">Предпочту сам</button>
+      </div>
+      
+      <div id="union-${unionId}-trust-percent" class="union-hidden">
+        <div class="union-text" id="union-${unionId}-text2" data-text="Насколько процентов смогли бы довериться мне">Насколько процентов смогли бы довериться мне</div>
+        <div class="union-buttons" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0;">
+          <button class="union-btn secondary" onclick="setTrustPercent(${unionId}, 0)" data-group="trust">0%</button>
+          <button class="union-btn secondary" onclick="setTrustPercent(${unionId}, 20)" data-group="trust">20%</button>
+          <button class="union-btn secondary" onclick="setTrustPercent(${unionId}, 40)" data-group="trust">40%</button>
+          <button class="union-btn secondary" onclick="setTrustPercent(${unionId}, 60)" data-group="trust">60%</button>
+          <button class="union-btn secondary" onclick="setTrustPercent(${unionId}, 80)" data-group="trust">80%</button>
+          <button class="union-btn secondary" onclick="setTrustPercent(${unionId}, 100)" data-group="trust">100%</button>
+        </div>
+      </div>
+      
+      <div id="union-${unionId}-hundred-percent" class="union-hidden">
+        <div class="union-text" id="union-${unionId}-text3" data-text="А на 100% смогли бы?">А на 100% смогли бы?</div>
+        <div class="union-buttons" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0;">
+          <button class="union-btn success" onclick="handleHundredPercent(${unionId}, true)" data-group="choice2">Да</button>
+          <button class="union-btn danger" onclick="handleHundredPercent(${unionId}, false)" data-group="choice2">Нет</button>
+        </div>
+        <div style="height: 16px;"></div>
+      </div>
+      
+      <div id="union-${unionId}-password" class="union-hidden">
+        <div class="union-text" id="union-${unionId}-text4" data-text="Верните телефон владельцу">Верните телефон владельцу</div>
+        <div class="union-input-group">
+          <input type="password" class="union-input" id="password-${unionId}" placeholder="Пароль" onkeypress="if(event.key==='Enter') handlePassword(${unionId})">
+          <button class="union-btn" onclick="handlePassword(${unionId})" style="margin-top:8px;width:100%;">Проверить пароль</button>
+        </div>
+      </div>
+      
+      <div id="union-${unionId}-agreement" class="union-hidden">
+        <div class="union-text" id="union-${unionId}-text5" data-text="Хорошо, тогда я предлагаю доверится полностью и придти к совместной победе в союзе\n\nЕсли мы победим, то поделим приз на двоих, вам сладкий приз, мне сертификат\nПлюс я лично буду обучать вас всю игру\n\nНо вам нужно будет делать то что я вам скажу\nВы согласны на такие условия?">
+          Хорошо, тогда я предлагаю доверится полностью и придти к совместной победе в союзе<br><br>
+          Если мы победим, то поделим приз на двоих, вам <strong>сладкий приз</strong>, мне сертификат<br>
+          Плюс я лично буду обучать вас всю игру<br><br>
+          Но вам нужно будет делать то что я вам скажу<br>
+          Вы согласны на такие условия?
+        </div>
+        <div class="union-buttons" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0;">
+          <button class="union-btn success" onclick="handleAgreement(${unionId}, true)" data-group="choice3">Да</button>
+          <button class="union-btn danger" onclick="handleAgreement(${unionId}, false)" data-group="choice3">Нет</button>
+        </div>
+        <div style="height: 16px;"></div>
+      </div>
+      
+      <div id="union-${unionId}-password-agreement" class="union-hidden">
+        <div class="union-text" style="color:#dc3545;font-weight:bold;text-align:center;padding:20px;border:2px solid #dc3545;border-radius:8px;background:#f8d7da;">
+          Передайте телефон владельцу
+        </div>
+        <div class="union-input-group" style="margin-top:12px;">
+          <input type="password" class="union-input" id="password-agreement-${unionId}" placeholder="Введите пароль" onkeypress="if(event.key==='Enter') handlePasswordAgreement(${unionId})">
+          <button class="union-btn" onclick="handlePasswordAgreement(${unionId})" style="margin-top:8px;width:100%;">Проверить пароль</button>
+        </div>
+      </div>
+      
+      <div id="union-${unionId}-conditions" class="union-hidden">
+        <div class="union-text bold" id="union-${unionId}-text6" data-text="Что вам надо будет сделать:">Что вам надо будет сделать:</div>
+        <div class="union-text blue-border" id="union-${unionId}-text7" data-text="Взять игровой кредит и передать его Дмитрию">Взять игровой кредит и передать его Дмитрию</div>
+        
+        <div class="union-text bold" id="union-${unionId}-text8" data-text="Что вы получите взамен:">Что вы получите взамен:</div>
+        <div class="union-text green-border" id="union-${unionId}-text9" data-text="Сладкий приз (если победим)\n\nПрофессионального игрока в наставники, который будет следить за вашей ведомостью и давать советы по игре">
+          <strong>Сладкий приз</strong> (если победим)<br><br>
+          <strong>Профессионального игрока в наставники</strong>, который будет следить за вашей ведомостью и давать советы по игре
+        </div>
+        
+        <div class="union-text" id="union-${unionId}-text10" data-text="На всякий случай вот сценарий выхода из союза, если вы вдруг захотите разойтись. Но этого крайне не рекомендуется делать\n\nТогда обучение заканчивается, вы не получите сладкого приза\nи Дмитрий вернет вам полную сумму кредита во второй половине 3-его раунда игры (он будет после двух перерывов)">
+          На всякий случай вот сценарий выхода из союза, если вы вдруг захотите разойтись. Но этого крайне не рекомендуется делать<br><br>
+          Тогда обучение заканчивается, вы не получите <strong>сладкого приза</strong><br>
+          и Дмитрий вернет вам полную сумму кредита во второй половине 3-его раунда игры (он будет после двух перерывов)
+        </div>
+        
+        <div class="union-text large-bold" id="union-${unionId}-text11" data-text="Согласны?">Согласны?</div>
+        <div class="union-buttons" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0;">
+          <button class="union-btn success" onclick="handleFinalAgreement(${unionId}, true)" data-group="choice4">Согласен</button>
+          <button class="union-btn danger" onclick="handleFinalAgreement(${unionId}, false)" data-group="choice4">Не согласен</button>
+        </div>
+        <div style="height: 16px;"></div>
+      </div>
+      
+      <div id="union-${unionId}-password" class="union-hidden">
+        <div class="union-text" style="color:#dc3545;font-weight:bold;text-align:center;padding:20px;border:2px solid #dc3545;border-radius:8px;background:#f8d7da;">
+          Передайте телефон владельцу
+        </div>
+        <div class="union-input-group" style="margin-top:12px;">
+          <input type="password" class="union-input" id="password-${unionId}" placeholder="Введите пароль" onkeypress="if(event.key==='Enter') handlePassword(${unionId})">
+          <button class="union-btn" onclick="handlePassword(${unionId})" style="margin-top:8px;width:100%;">Проверить пароль</button>
+        </div>
+      </div>
+      
+      <div id="union-${unionId}-signature" class="union-hidden">
+        <div class="union-input-group">
+          <input type="text" class="union-input" id="playerName-${unionId}" placeholder="Введите ваше имя" oninput="savePlayerName(${unionId})">
+        </div>
+        <div class="union-text" id="union-${unionId}-text12" data-text="Распишитесь">Распишитесь</div>
+        <div class="union-signature-area" id="signatureArea-${unionId}" onclick="if(!this.querySelector('canvas')) startSignature(${unionId})">
+          <div id="signature-${unionId}">Нажмите здесь для подписи</div>
+        </div>
+        <div id="union-${unionId}-signature-complete" class="union-hidden">
+          <div class="union-text">Передайте телефон владельцу</div>
+          <div style="margin:12px 0;display:flex;gap:8px;align-items:center;">
+            <button class="union-btn" onclick="eraseSignature(${unionId})" style="background:#6c757d;color:#fff;padding:4px 8px;font-size:12px;opacity:0.7;">Стереть</button>
+            <button class="union-btn" onclick="concludeUnion(${unionId})" style="background:#ffd700;color:#000;padding:8px 16px;font-weight:bold;">Заключить союз</button>
+          </div>
+        </div>
+        <div id="union-${unionId}-concluded" class="union-hidden">
+          <div class="union-input-group">
+            <input type="text" class="union-input" id="playerNameReadonly-${unionId}" readonly style="background:#f8f9fa;color:#6c757d;">
+          </div>
+          <div class="union-text" style="color:#6c757d;">Подпись зафиксирована</div>
+          <div class="union-text" style="color:#28a745;font-weight:bold;">✅ Союз заключен!</div>
+          <div style="margin-top: 12px; text-align: right; display:block;">
+            <button class="btn" onclick="exportUnion(${unionId})" title="Скачать" aria-label="Скачать союз" style="background:#e9ecef;color:#495057;border:1px solid #adb5bd;padding:8px 10px;border-radius:6px;font-size:18px;display:inline-flex;align-items:center;">📥</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  function handleUnionChoice(unionId, choice) {
+    // Блокируем только кнопки группы choice1
+    const choice1Buttons = document.querySelectorAll(`#union-${unionId} [data-group="choice1"]`);
+    choice1Buttons.forEach(btn => {
+      btn.classList.remove('selected');
+      btn.classList.add('disabled');
+      btn.disabled = true;
+    });
+    
+    // Выделяем выбранную кнопку
+    event.target.classList.add('selected');
+    event.target.classList.remove('disabled');
+    event.target.disabled = false;
+    
+    if (choice === 'trust') {
+      const trustPercentDiv = document.getElementById(`union-${unionId}-trust-percent`);
+      trustPercentDiv.classList.remove('union-hidden');
+      // Сначала фиксируем нажатую кнопку, затем показываем и фиксируем текст 2
+      addToSequence(unionId, 'choice', 'trust');
+      try { addToSequence(unionId, 'text', 'text2'); } catch {}
+      saveUnionState(unionId, 'trust-choice', true);
+    } else {
+      const passwordDiv = document.getElementById(`union-${unionId}-password`);
+      passwordDiv.classList.remove('union-hidden');
+      // Для ветки "сам" логика текста и фиксации кнопки может отличаться, но сохраняем порядок: текст -> кнопка
+      // Здесь отдельного текста нет, поэтому фиксируем кнопку сразу
+      addToSequence(unionId, 'choice', 'self');
+      saveUnionState(unionId, 'self-choice', true);
+    }
+  }
+  
+  function setTrustPercent(unionId, percent) {
+    // Блокируем только кнопки процентов доверия
+    const trustButtons = document.querySelectorAll(`#union-${unionId} [data-group="trust"]`);
+    trustButtons.forEach(btn => {
+      btn.classList.remove('selected');
+      btn.classList.add('disabled');
+      btn.disabled = true;
+    });
+    
+    // Выделяем выбранную кнопку
+    const selectedButton = document.querySelector(`#union-${unionId} [data-group="trust"][onclick*="${percent}"]`);
+    if (selectedButton) {
+      selectedButton.classList.add('selected');
+      selectedButton.classList.remove('disabled');
+      selectedButton.disabled = false;
+    }
+    
+    // Сначала фиксируем сам выбор процента (кнопка)
+    try { addToSequence(unionId, 'trust_percent', percent); } catch {}
+
+    // Затем показываем следующий текст сразу без задержки
+    if (percent === 100) {
+      // Если выбран 100%, сразу переходим к соглашению
+      const agreementDiv = document.getElementById(`union-${unionId}-agreement`);
+      agreementDiv.classList.remove('union-hidden');
+      // Фиксируем текст 5 после показа
+      try { addToSequence(unionId, 'text', 'text5'); } catch {}
+    } else {
+      // Для других процентов показываем вопрос "А на 100% смогли бы?" для уточнения
+      const hundredPercentDiv = document.getElementById(`union-${unionId}-hundred-percent`);
+      hundredPercentDiv.classList.remove('union-hidden');
+      // Фиксируем текст 3 после показа
+      try { addToSequence(unionId, 'text', 'text3'); } catch {}
+      // Затем фиксируем сводку процента доверия, чтобы шла после вопроса
+      try { addToSequence(unionId, 'trust_percent_summary', percent); } catch {}
+    }
+  }
+  
+  function handleTrustPercent(unionId) {
+    const input = document.getElementById(`trustPercent-${unionId}`);
+    const hundredPercentDiv = document.getElementById(`union-${unionId}-hundred-percent`);
+    
+    if (input.value && parseInt(input.value) >= 0) {
+      hundredPercentDiv.classList.remove('union-hidden');
+    }
+  }
+  
+  function handleHundredPercent(unionId, isHundred) {
+    // Блокируем только кнопки группы choice2
+    const choice2Buttons = document.querySelectorAll(`#union-${unionId} [data-group="choice2"]`);
+    choice2Buttons.forEach(btn => {
+      btn.classList.remove('selected');
+      btn.classList.add('disabled');
+      btn.disabled = true;
+    });
+    
+    // Выделяем выбранную кнопку
+    event.target.classList.add('selected');
+    event.target.classList.remove('disabled');
+    event.target.disabled = false;
+    
+    if (isHundred) {
+      // Показать соглашение
+      const agreementDiv = document.getElementById(`union-${unionId}-agreement`);
+      agreementDiv.classList.remove('union-hidden');
+      // Сначала фиксируем нажатую кнопку, затем текст 5
+      addToSequence(unionId, 'hundred_percent', isHundred);
+      try { addToSequence(unionId, 'text', 'text5'); } catch {}
+    } else {
+      // Показать поле пароля сразу без задержки
+      const passwordDiv = document.getElementById(`union-${unionId}-password`);
+      passwordDiv.classList.remove('union-hidden');
+      // Фиксируем нажатую кнопку
+      addToSequence(unionId, 'hundred_percent', isHundred);
+    }
+  }
+  
+  function handlePassword(unionId) {
+    const input = document.getElementById(`password-${unionId}`);
+    if (input.value === '1111') {
+      // Скрываем поле пароля
+      const passwordDiv = document.getElementById(`union-${unionId}-password`);
+      if (passwordDiv) {
+        passwordDiv.classList.add('union-hidden');
+      }
+      
+      // Добавляем в последовательность
+      addToSequence(unionId, 'password', 'correct');
+      
+      // Проверяем, какой раздел нужно показать в зависимости от контекста
+      const conditionsDiv = document.getElementById(`union-${unionId}-conditions`);
+      const agreementDiv = document.getElementById(`union-${unionId}-agreement`);
+      const signatureDiv = document.getElementById(`union-${unionId}-signature`);
+      
+      // Приоритет: сначала соглашение (для "Предпочту сам"), потом условия, потом подпись
+      if (agreementDiv) {
+        // Показать соглашение (для "Предпочту сам" и других вопросов)
+        agreementDiv.classList.remove('union-hidden');
+        try { addToSequence(unionId, 'text', 'text5'); } catch {}
+      } else if (conditionsDiv) {
+        // Показать условия (для вопроса "А на 100% смогли бы?")
+        conditionsDiv.classList.remove('union-hidden');
+        try {
+          addToSequence(unionId, 'text', 'text6');
+          addToSequence(unionId, 'text', 'text7');
+          addToSequence(unionId, 'text', 'text8');
+          addToSequence(unionId, 'text', 'text9');
+          addToSequence(unionId, 'text', 'text10');
+          addToSequence(unionId, 'text', 'text11');
+        } catch {}
+      } else if (signatureDiv) {
+        // Показать форму подписи (для вопроса "Согласны?")
+        signatureDiv.classList.remove('union-hidden');
+        try { addToSequence(unionId, 'text', 'text12'); } catch {}
+      }
+    } else if (input.value.length > 0) {
+      // Показать сообщение "Передайте телефон владельцу"
+      const passwordDiv = document.getElementById(`union-${unionId}-password`);
+      passwordDiv.classList.add('union-hidden');
+      
+      // Добавляем в последовательность
+      addToSequence(unionId, 'password', 'incorrect');
+      
+      // Создаем сообщение о передаче телефона
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'union-text';
+      messageDiv.style.color = '#dc3545';
+      messageDiv.style.fontWeight = 'bold';
+      messageDiv.style.textAlign = 'center';
+      messageDiv.style.padding = '20px';
+      messageDiv.style.border = '2px solid #dc3545';
+      messageDiv.style.borderRadius = '8px';
+      messageDiv.style.background = '#f8d7da';
+      messageDiv.innerHTML = 'Передайте телефон владельцу';
+      messageDiv.id = `password-message-${unionId}`;
+      
+      // Вставляем сообщение после секции пароля
+      passwordDiv.parentNode.insertBefore(messageDiv, passwordDiv.nextSibling);
+      
+      // Через 3 секунды показываем поле пароля снова
+      setTimeout(() => {
+        // Удаляем сообщение
+        const message = document.getElementById(`password-message-${unionId}`);
+        if (message) {
+          message.remove();
+        }
+        
+        // Показываем поле пароля снова
+        passwordDiv.classList.remove('union-hidden');
+        
+        // Очищаем поле пароля
+        input.value = '';
+      }, 3000);
+    }
+  }
+  
+  function handlePasswordAgreement(unionId) {
+    const input = document.getElementById(`password-agreement-${unionId}`);
+    if (input.value === '1111') {
+      addToSequence(unionId, 'password_agreement', 'correct');
+      // Скрываем поле пароля
+      const passwordDiv = document.getElementById(`union-${unionId}-password-agreement`);
+      if (passwordDiv) {
+        passwordDiv.classList.add('union-hidden');
+      }
+      
+      // Показать условия
+      const conditionsDiv = document.getElementById(`union-${unionId}-conditions`);
+      conditionsDiv.classList.remove('union-hidden');
+      // Фиксируем тексты условий в последовательности (6..11), чтобы экспорт шёл в правильном порядке
+      try {
+        addToSequence(unionId, 'text', 'text6');
+        addToSequence(unionId, 'text', 'text7');
+        addToSequence(unionId, 'text', 'text8');
+        addToSequence(unionId, 'text', 'text9');
+        addToSequence(unionId, 'text', 'text10');
+        addToSequence(unionId, 'text', 'text11');
+      } catch {}
+    } else if (input.value.length > 0) {
+      addToSequence(unionId, 'password_agreement', 'incorrect');
+      // Показать сообщение "Передайте телефон владельцу"
+      const passwordDiv = document.getElementById(`union-${unionId}-password-agreement`);
+      passwordDiv.classList.add('union-hidden');
+      
+      // Создаем сообщение о передаче телефона
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'union-text';
+      messageDiv.style.color = '#dc3545';
+      messageDiv.style.fontWeight = 'bold';
+      messageDiv.style.textAlign = 'center';
+      messageDiv.style.padding = '20px';
+      messageDiv.style.border = '2px solid #dc3545';
+      messageDiv.style.borderRadius = '8px';
+      messageDiv.style.background = '#f8d7da';
+      messageDiv.innerHTML = 'Передайте телефон владельцу';
+      messageDiv.id = `password-agreement-message-${unionId}`;
+      
+      // Вставляем сообщение после секции пароля
+      passwordDiv.parentNode.insertBefore(messageDiv, passwordDiv.nextSibling);
+      
+      // Через 3 секунды показываем поле пароля снова
+      setTimeout(() => {
+        // Удаляем сообщение
+        const message = document.getElementById(`password-agreement-message-${unionId}`);
+        if (message) {
+          message.remove();
+        }
+        
+        // Показываем поле пароля снова
+        passwordDiv.classList.remove('union-hidden');
+        
+        // Очищаем поле пароля
+        input.value = '';
+      }, 3000);
+    }
+  }
+  
+  function handleAgreement(unionId, agreed) {
+    // Блокируем только кнопки группы choice3
+    const choice3Buttons = document.querySelectorAll(`#union-${unionId} [data-group="choice3"]`);
+    choice3Buttons.forEach(btn => {
+      btn.classList.remove('selected');
+      btn.classList.add('disabled');
+      btn.disabled = true;
+    });
+    
+    // Выделяем выбранную кнопку
+    event.target.classList.add('selected');
+    event.target.classList.remove('disabled');
+    event.target.disabled = false;
+    
+    if (agreed) {
+      // Показать условия
+      const conditionsDiv = document.getElementById(`union-${unionId}-conditions`);
+      conditionsDiv.classList.remove('union-hidden');
+      // Сначала фиксируем нажатую кнопку, затем последовательно тексты 6..11
+      addToSequence(unionId, 'agreement', agreed); // Кнопка: Да/Нет
+      try {
+        addToSequence(unionId, 'text', 'text6');
+        addToSequence(unionId, 'text', 'text7');
+        addToSequence(unionId, 'text', 'text8');
+        addToSequence(unionId, 'text', 'text9');
+        addToSequence(unionId, 'text', 'text10');
+        addToSequence(unionId, 'text', 'text11');
+      } catch {}
+    } else {
+      // Показать сообщение "Передайте телефон владельцу" и поле пароля
+      const passwordDiv = document.getElementById(`union-${unionId}-password-agreement`);
+      passwordDiv.classList.remove('union-hidden');
+      addToSequence(unionId, 'agreement', agreed); // Кнопка: Нет
+    }
+  }
+  
+  function createFinalPasswordField(unionId) {
+    // Создаем поле пароля для вопроса "Согласны?"
+    const passwordDiv = document.createElement('div');
+    passwordDiv.id = `union-${unionId}-password-final`;
+    passwordDiv.className = 'union-hidden';
+    passwordDiv.innerHTML = `
+      <div class="union-text" style="color:#dc3545;font-weight:bold;text-align:center;padding:20px;border:2px solid #dc3545;border-radius:8px;background:#f8d7da;">
+        Передайте телефон владельцу
+      </div>
+      <div class="union-input-group" style="margin-top:12px;">
+        <input type="password" class="union-input" id="password-final-${unionId}" placeholder="Введите пароль" onkeypress="if(event.key==='Enter') handlePasswordFinal(${unionId})">
+        <button class="union-btn" onclick="handlePasswordFinal(${unionId})" style="margin-top:8px;width:100%;">Проверить пароль</button>
+      </div>
+    `;
+    
+    // Вставляем поле пароля после кнопок "Согласны?"
+    const unionElement = document.getElementById(`union-${unionId}`);
+    if (unionElement) {
+      unionElement.appendChild(passwordDiv);
+    }
+    
+    // Показываем поле пароля
+    passwordDiv.classList.remove('union-hidden');
+  }
+  
+  function handlePasswordFinal(unionId) {
+    const input = document.getElementById(`password-final-${unionId}`);
+    if (input.value === '1111') {
+      addToSequence(unionId, 'password_final', 'correct');
+      // Скрываем поле пароля
+      const passwordDiv = document.getElementById(`union-${unionId}-password-final`);
+      if (passwordDiv) {
+        passwordDiv.classList.add('union-hidden');
+      }
+      
+      // Показать форму подписи
+      const signatureDiv = document.getElementById(`union-${unionId}-signature`);
+      signatureDiv.classList.remove('union-hidden');
+    } else if (input.value.length > 0) {
+      addToSequence(unionId, 'password_final', 'incorrect');
+      // Показать сообщение "Передайте телефон владельцу"
+      const passwordDiv = document.getElementById(`union-${unionId}-password-final`);
+      passwordDiv.classList.add('union-hidden');
+      
+      // Создаем сообщение о передаче телефона
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'union-text';
+      messageDiv.style.color = '#dc3545';
+      messageDiv.style.fontWeight = 'bold';
+      messageDiv.style.textAlign = 'center';
+      messageDiv.style.padding = '20px';
+      messageDiv.style.border = '2px solid #dc3545';
+      messageDiv.style.borderRadius = '8px';
+      messageDiv.style.background = '#f8d7da';
+      messageDiv.innerHTML = 'Передайте телефон владельцу';
+      messageDiv.id = `password-final-message-${unionId}`;
+      
+      // Вставляем сообщение после секции пароля
+      passwordDiv.parentNode.insertBefore(messageDiv, passwordDiv.nextSibling);
+      
+      // Через 3 секунды показываем поле пароля снова
+      setTimeout(() => {
+        // Удаляем сообщение
+        const message = document.getElementById(`password-final-message-${unionId}`);
+        if (message) {
+          message.remove();
+        }
+        
+        // Показываем поле пароля снова
+        passwordDiv.classList.remove('union-hidden');
+        
+        // Очищаем поле пароля
+        input.value = '';
+      }, 3000);
+    }
+  }
+  
+  function handleFinalAgreement(unionId, agreed) {
+    // Блокируем только кнопки группы choice4
+    const choice4Buttons = document.querySelectorAll(`#union-${unionId} [data-group="choice4"]`);
+    choice4Buttons.forEach(btn => {
+      btn.classList.remove('selected');
+      btn.classList.add('disabled');
+      btn.disabled = true;
+    });
+    
+    // Выделяем выбранную кнопку
+    event.target.classList.add('selected');
+    event.target.classList.remove('disabled');
+    event.target.disabled = false;
+    
+    if (agreed) {
+      addToSequence(unionId, 'final_agreement', agreed); // Кнопка: Согласен
+      // Показать форму подписи
+      const signatureDiv = document.getElementById(`union-${unionId}-signature`);
+      signatureDiv.classList.remove('union-hidden');
+      // Текст 12 стал виден
+      try { addToSequence(unionId, 'text', 'text12'); } catch {}
+    } else {
+      // Показать сообщение "Передайте телефон владельцу" и поле пароля
+      const passwordDiv = document.getElementById(`union-${unionId}-password-final`);
+      if (passwordDiv) {
+        passwordDiv.classList.remove('union-hidden');
+      } else {
+        // Если поле не существует, создаем его
+        createFinalPasswordField(unionId);
+      }
+      // Фиксируем нажатую кнопку
+      addToSequence(unionId, 'final_agreement', agreed); // Кнопка: Не согласен
+    }
+  }
+  
+  function startSignature(unionId) {
+    console.log('Starting signature for union:', unionId);
+    const signatureArea = document.getElementById(`signatureArea-${unionId}`);
+    const signatureDiv = document.getElementById(`signature-${unionId}`);
+    
+    if (!signatureArea || !signatureDiv) {
+      console.error('Signature area or div not found for union:', unionId);
+      return;
+    }
+    
+    // Проверяем, есть ли уже canvas в области подписи
+    const existingCanvas = signatureArea.querySelector('canvas');
+    if (existingCanvas) {
+      console.log('Canvas already exists, not creating new one');
+      return;
+    }
+    
+    // Простая реализация подписи с поддержкой мобильных устройств
+    const canvas = document.createElement('canvas');
+    canvas.width = signatureArea.offsetWidth - 40;
+    canvas.height = 60;
+    canvas.style.border = '1px solid #ccc';
+    canvas.style.borderRadius = '4px';
+    canvas.style.cursor = 'crosshair';
+    canvas.style.touchAction = 'none'; // Важно для мобильных устройств
+    
+    console.log('Canvas created with size:', canvas.width, 'x', canvas.height);
+    
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    let isDrawing = false;
+    
+    function startDraw(e) {
+      console.log('Starting to draw signature');
+      isDrawing = true;
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX || e.touches[0].clientX) - rect.left;
+      const y = (e.clientY || e.touches[0].clientY) - rect.top;
+      console.log('Start position:', x, y);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+    
+    function draw(e) {
+      if (isDrawing) {
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+    }
+    
+    function stopDraw() {
+      isDrawing = false;
+      
+      // Проверяем, есть ли что-то нарисованное на canvas
+      const ctx = canvas.getContext('2d');
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const hasContent = imageData.data.some((value, index) => {
+        // Проверяем альфа-канал (каждый 4-й элемент)
+        return index % 4 === 3 && value > 0;
+      });
+      
+      if (hasContent) {
+        console.log('Signature drawn, saving...');
+        
+        // Сохраняем подпись
+        const union = unions.find(u => u.id === unionId);
+        if (union) {
+          // Сохраняем canvas как data URL для восстановления
+          const dataURL = canvas.toDataURL();
+          // Сохраняем и HTML (<img>) и data URL для надежности
+          union.signature = dataURL;
+          union.signatureHTML = `<img src="${dataURL}" alt="signature" style="max-width:100%;height:60px;object-fit:contain;border:1px solid #ccc;border-radius:4px;pointer-events:none;opacity:0.7;background:#f8f9fa;">`;
+          addToSequence(unionId, 'signature', 'drawn');
+          saveUnions();
+          console.log('Signature saved for union:', unionId);
+        }
+        
+        // Отображаем сохраненную подпись как <img> вместо холста для一致ного восстановления
+        const signatureArea = document.getElementById(`signatureArea-${unionId}`);
+        if (signatureArea) {
+          signatureArea.innerHTML = union.signatureHTML || '';
+        }
+        
+        // Показываем сообщение о завершении подписи
+        const completeDiv = document.getElementById(`union-${unionId}-signature-complete`);
+        if (completeDiv) {
+          completeDiv.classList.remove('union-hidden');
+        }
+        
+        // Убираем обработчик клика с области подписи, чтобы не создавать новый canvas
+        if (signatureArea) {
+          signatureArea.onclick = null;
+        }
+      } else {
+        console.log('No signature content detected');
+      }
+    }
+    
+    // События для мыши
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mouseleave', stopDraw); // Сохраняем при уходе мыши
+    
+    // События для сенсорных устройств
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      startDraw(e);
+    });
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      draw(e);
+    });
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      stopDraw();
+    });
+    
+    signatureDiv.innerHTML = '';
+    signatureDiv.appendChild(canvas);
+  }
+  
+  function eraseSignature(unionId) {
+    const signatureArea = document.getElementById(`signatureArea-${unionId}`);
+    const signatureDiv = document.getElementById(`signature-${unionId}`);
+    const completeDiv = document.getElementById(`union-${unionId}-signature-complete`);
+    
+    // Очищаем область подписи
+    signatureArea.innerHTML = '<div id="signature-' + unionId + '">Нажмите здесь для подписи</div>';
+    
+    // Восстанавливаем обработчик клика
+    signatureArea.onclick = function() {
+      if (!this.querySelector('canvas')) {
+        startSignature(unionId);
+      }
+    };
+    
+    // Сохраняем изменения
+    const union = unions.find(u => u.id === unionId);
+    if (union) {
+      union.signature = '';
+      union.signatureHTML = '';
+      addToSequence(unionId, 'signature', 'erased');
+      saveUnions();
+    }
+    
+    // Скрываем кнопки
+    completeDiv.classList.add('union-hidden');
+    
+    // Имя не сбрасываем - оставляем как есть
+  }
+  
+  function concludeUnion(unionId) {
+    const completeDiv = document.getElementById(`union-${unionId}-signature-complete`);
+    const concludedDiv = document.getElementById(`union-${unionId}-concluded`);
+    const nameInput = document.getElementById(`playerName-${unionId}`);
+    const nameReadonlyInput = document.getElementById(`playerNameReadonly-${unionId}`);
+    const signatureArea = document.getElementById(`signatureArea-${unionId}`);
+    
+    // Проверяем обязательность имени и подписи
+    if (!nameInput || !nameInput.value.trim()) {
+      alert('Введите имя перед заключением союза!');
+      return;
+    }
+    
+    if (!signatureArea || !signatureArea.hasChildNodes()) {
+      alert('Необходимо поставить подпись перед заключением союза!');
+      return;
+    }
+    
+    // Копируем имя в readonly поле
+    if (nameInput && nameReadonlyInput) {
+      nameReadonlyInput.value = nameInput.value;
+      nameReadonlyInput.style.display = 'block';
+    }
+    
+    // Скрываем кнопки и показываем заключенное состояние
+    completeDiv.classList.add('union-hidden');
+    concludedDiv.classList.remove('union-hidden');
+    
+    // Делаем поля нередактируемыми
+    if (nameInput) {
+      nameInput.style.display = 'none';
+    }
+    
+    // Делаем область подписи нередактируемой, но оставляем видимой
+    if (signatureArea) {
+      signatureArea.style.pointerEvents = 'none';
+      signatureArea.style.opacity = '0.7';
+      signatureArea.style.background = '#f8f9fa';
+    }
+    
+    // Сохраняем данные союза
+    const union = unions.find(u => u.id === unionId);
+    if (union) {
+      union.playerName = nameInput.value;
+      // Сохраняем HTML подписи, если она есть
+      if (signatureArea.innerHTML) {
+        union.signatureHTML = signatureArea.innerHTML;
+      }
+      union.concluded = true;
+      union.concludedAt = new Date().toISOString();
+      addToSequence(unionId, 'concluded', true);
+      saveUnions();
+    }
+  }
+  
+  function viewUnionHistory() {
+    if (unions.length === 0) {
+      alert('Нет союзов для просмотра истории');
+      return;
+    }
+    
+    let historyText = 'ИСТОРИЯ СОЮЗОВ:\n\n';
+    
+    unions.forEach((union, index) => {
+      historyText += `Союз #${union.id} (${union.playerName || 'Без имени'}):\n`;
+      
+      if (union.sequence && union.sequence.length > 0) {
+        union.sequence.forEach((step, stepIndex) => {
+          const time = new Date(step.timestamp).toLocaleString();
+          const actionText = getActionText(step.action, step.value);
+          historyText += `  ${stepIndex + 1}. ${actionText} (${time})\n`;
+        });
+      } else {
+        historyText += '  История пуста\n';
+      }
+      
+      if (union.concluded) {
+        historyText += `  ✅ ЗАКЛЮЧЕН: ${union.concludedAt ? new Date(union.concludedAt).toLocaleString() : 'Неизвестно'}\n`;
+      }
+      
+      historyText += '\n';
+    });
+    
+    // Создаем модальное окно для отображения истории
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 90%;
+      max-height: 80%;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+    `;
+    
+    modalContent.textContent = historyText;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Закрыть';
+    closeBtn.style.cssText = `
+      margin-top: 10px;
+      padding: 8px 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    `;
+    closeBtn.onclick = () => modal.remove();
+    
+    modalContent.appendChild(closeBtn);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Закрытие по клику вне модального окна
+    modal.onclick = (e) => {
+      if (e.target === modal) modal.remove();
+    };
+  }
+
+  // Выгрузка данных одного союза в один HTML-файл (сохранение порядка показа текстов и действий)
+  function exportUnion(unionId) {
+    try {
+      const union = (Array.isArray(unions) ? unions.find(u => u.id === unionId) : null) || {};
+      const playerName = union.playerName || (document.getElementById(`playerNameReadonly-${unionId}`)?.value || document.getElementById(`playerName-${unionId}`)?.value || '').trim();
+      // Подпись: предпочитаем сохранённый data URL, иначе пытаемся взять из DOM
+      let signatureDataUrl = union.signature || '';
+      if (!signatureDataUrl) {
+        const img = document.querySelector(`#signatureArea-${unionId} img`);
+        if (img && img.src && img.src.startsWith('data:image/')) signatureDataUrl = img.src;
+      }
+      // Формируем последовательность вывода по union.sequence: показываем тексты по мере появления и действия в нужных местах
+      const seq = Array.isArray(union.sequence) ? union.sequence.slice() : [];
+      const safeGetText = (id) => {
+        const el = document.getElementById(`union-${unionId}-${id}`);
+        const t = el ? (el.getAttribute('data-text') || el.textContent || '') : '';
+        return /верните телефон владельцу/i.test(t) ? '' : t;
+      };
+      // Берём HTML для сохранения жирного как в приложении (strong/b/br), остальное удаляем
+      const getRichHTML = (id) => {
+        const el = document.getElementById(`union-${unionId}-${id}`);
+        return el ? (el.innerHTML || '') : '';
+      };
+      const sanitizeRich = (html) => {
+        if (!html) return '';
+        // Удаляем все теги, кроме <strong>, <b>, <br>
+        return html
+          .replace(/<(?!\/?(?:strong|b|br)\b)[^>]*>/gi, '')
+          .replace(/on\w+\s*=\s*"[^"]*"/gi, '')
+          .replace(/on\w+\s*=\s*'[^']*'/gi, '')
+          .replace(/on\w+\s*=\s*[^\s>]+/gi, '');
+      };
+      const ordered = [];
+      // Если раньше записали text2 до клика по "Могу довериться", откладываем его до первого choice:trust
+      let pendingText2 = null;
+      let trustChoiceSeen = false;
+      seq.forEach(step => {
+        if (!step || !step.action) return;
+        if (/^password/.test(step.action)) return; // пропускаем пароли
+        if (step.action === 'text' && typeof step.value === 'string') {
+          // Исключаем из выгрузки подсказку про подпись (text12 = "Распишитесь")
+          if (step.value === 'text12') return;
+          // Откладываем text2 ("Насколько процентов...") пока не выведем клик доверия
+          if (step.value === 'text2' && !trustChoiceSeen) {
+            pendingText2 = { kind: 'text', id: 'text2', text: safeGetText('text2') };
+            return;
+          }
+          const txt = safeGetText(step.value);
+          if (txt) ordered.push({ kind: 'text', id: step.value, text: txt });
+          return;
+        }
+        switch (step.action) {
+          case 'choice':
+            if (step.value === 'trust') {
+              ordered.push({ kind: 'action', text: 'Кнопка: Могу довериться' });
+              trustChoiceSeen = true;
+              // Если есть отложенный text2 — выводим сразу после клика
+              if (pendingText2) {
+                if (pendingText2.text) ordered.push(pendingText2);
+                pendingText2 = null;
+              }
+            } else {
+              ordered.push({ kind: 'action', text: 'Кнопка: Предпочту сам' });
+            }
+            break;
+          case 'trust_percent':
+            ordered.push({ kind: 'action', text: `Кнопка: ${step.value}%` });
+            break;
+          // trust_percent_summary больше не выводим в экспорт, т.к. дублирует кнопку процента
+          case 'hundred_percent':
+            ordered.push({ kind: 'action', text: step.value ? 'Кнопка: Да' : 'Кнопка: Нет' });
+            break;
+          case 'agreement':
+            ordered.push({ kind: 'action', text: step.value ? 'Кнопка: Да' : 'Кнопка: Нет' });
+            break;
+          case 'final_agreement':
+            ordered.push({ kind: 'action', text: step.value ? 'Кнопка: Согласен' : 'Кнопка: Не согласен' });
+            break;
+          case 'name_input':
+            // Имя выводим отдельно внизу; не дублируем в событиях
+            break;
+          case 'signature':
+            // Подпись фиксируем картинкой внизу; не дублируем в событиях
+            break;
+          case 'concluded':
+            // Статус вверху уже есть; не дублируем в событиях
+            break;
+        }
+      });
+      // Если клик доверия так и не встретился, но text2 был — добавим его как есть (fallback)
+      if (pendingText2) {
+        ordered.push(pendingText2);
+        pendingText2 = null;
+      }
+      const concluded = !!union.concluded;
+      const exportedAt = new Date().toLocaleString();
+      const concludedAtIso = union.concludedAt || '';
+      const concludedDate = concludedAtIso ? new Date(concludedAtIso) : null;
+      const formatLocalDateTime = (date)=>{
+        try{
+          const d = date || new Date();
+          const dd = String(d.getDate()).padStart(2,'0');
+          const mm = String(d.getMonth()+1).padStart(2,'0');
+          const yyyy = d.getFullYear();
+          const HH = String(d.getHours()).padStart(2,'0');
+          const MM = String(d.getMinutes()).padStart(2,'0');
+          const SS = String(d.getSeconds()).padStart(2,'0');
+          // Формируем смещение UTC корректно
+          const offsetMin = -d.getTimezoneOffset(); // мин относительно UTC
+          const sign = offsetMin >= 0 ? '+' : '-';
+          const abs = Math.abs(offsetMin);
+          const oh = Math.floor(abs/60);
+          const om = abs % 60;
+          const offsetStr = `UTC ${sign}${oh}${om ? ':'+String(om).padStart(2,'0') : ''}`;
+          return `${dd}.${mm}.${yyyy} ${HH}:${MM}:${SS} (${offsetStr})`;
+        }catch{ return (date||new Date()).toLocaleString(); }
+      };
+      // Формируем простой самодостаточный HTML
+      const safe = (s)=> (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const titleText = `Союз с участником ${playerName ? safe(playerName) : ''}`.trim();
+      const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>${titleText}</title>
+<style>
+  html,body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',sans-serif; margin:0; padding:0; color:#222; font-size:16px; line-height:1.5}
+  body{margin:20px}
+  h1{margin:0 0 4px 0; font-weight:600}
+  .meta{color:#666; font-size:12px; margin-bottom:16px}
+  .block{background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin:12px 0}
+  .label{color:#6c757d; font-size:12px; margin-bottom:6px}
+  img.signature{max-width:100%; height:90px; object-fit:contain; border:1px solid #ccc; border-radius:4px; background:#f8f9fa; opacity:.85}
+  @media (max-width: 640px){
+    img.signature{height:140px}
+  }
+  pre{white-space:pre-wrap; word-break:break-word; font-family:inherit; font-size:16px; line-height:1.5; margin:0}
+  pre b, pre strong{font-weight:700}
+  .ok{color:#198754}
+  .warn{color:#dc3545}
+  .grid{display:grid; grid-template-columns:1fr; gap:8px}
+  .textItem{border-top:1px dashed #e5e7eb; padding-top:8px; margin-top:8px}
+  .actionLine{color:#198754; font-weight:600}
+  .blueBorder{border:2px solid #4a90e2; border-radius:8px; padding:10px; background:#f0f8ff}
+  .greenBorder{border:2px solid #28a745; border-radius:8px; padding:10px; background:#f6fff6}
+ </style></head><body>
+<h1>${titleText}</h1>
+${concluded ? `<div class=\"block\"><div class=\"ok\" style=\"font-weight:600\">Заключен</div><div>Дата заключения ${formatLocalDateTime(concludedDate)}</div></div>` : ''}
+<div class="meta">Экспортировано: ${exportedAt}${concluded ? ' · <span class="ok">Заключен</span>' : ''}</div>
+<div class="block"><div class="label">Условия договора</div><div class="grid">${ordered.map(it=> {
+  if (it.kind==='text') {
+    const extraClass = it.id==='text7' ? ' blueBorder' : (it.id==='text9' ? ' greenBorder' : '');
+    const rich = sanitizeRich(getRichHTML(it.id)) || safe(it.text);
+    return `<div class="textItem${extraClass}"><pre>${rich}</pre></div>`;
+  }
+  return `<div class="textItem actionLine"><pre>${safe(it.text)}</pre></div>`;
+}).join('')}</div></div>
+<div class="block"><div class="label">Имя участника</div><div>${playerName ? safe(playerName) : '<span class="warn">— не указано —</span>'}</div></div>
+<div class="block"><div class="label">Подпись</div>${signatureDataUrl ? `<img class="signature" src="${signatureDataUrl}" alt="signature">` : '<div class="warn">— нет подписи —</div>'}</div>
+ </body></html>`;
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      // Формируем имя файла: "Союз с [Имя] [dd.mm.yy].html". Дата — дата заключения, иначе сегодня
+      const fileDate = concludedDate || new Date();
+      const ddFN = String(fileDate.getDate()).padStart(2,'0');
+      const mmFN = String(fileDate.getMonth()+1).padStart(2,'0');
+      const yyFN = String(fileDate.getFullYear()).slice(-2);
+      const fileSafeName = (playerName || 'Без имени').trim();
+      a.download = `Союз с ${fileSafeName} ${ddFN}.${mmFN}.${yyFN}.html`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    } catch (e) {
+      console.error('exportUnion error', e);
+      alert('Не удалось выгрузить союз: ' + (e?.message || e));
+    }
+  }
+  
+  function getActionText(action, value) {
+    const actionMap = {
+      'choice': value === 'trust' ? 'Выбрал "Могу довериться"' : 'Выбрал "Предпочту сам"',
+      'trust_percent': `Выбрал процент доверия: ${value}%`,
+      'hundred_percent': value ? 'Ответил "Да" на 100%' : 'Ответил "Нет" на 100%',
+      'password': value === 'correct' ? 'Ввел правильный пароль' : 'Ввел неправильный пароль',
+      'password_agreement': value === 'correct' ? 'Пароль (условия) верный' : 'Пароль (условия) неверный',
+      'password_final': value === 'correct' ? 'Пароль (финал) верный' : 'Пароль (финал) неверный',
+      'agreement': value ? 'Согласился на условия' : 'Не согласился на условия',
+      'final_agreement': value ? 'Согласился заключить союз' : 'Не согласился заключить союз',
+      'name_input': `Ввел имя: "${value}"`,
+      'signature': 'Поставил подпись',
+      'concluded': 'Заключил союз'
+    };
+    
+    return actionMap[action] || `${action}: ${value}`;
+  }
+  
+  function editAllUnions() {
+    const password = prompt('Введите пароль для редактирования всех союзов:');
+    if (password !== '1111') {
+      alert('Неверный пароль!');
+      return;
+    }
+    
+    // Создаем модальное окно для редактирования всех союзов
+    const modal = document.createElement('div');
+    modal.className = 'union-edit-modal';
+    modal.innerHTML = `
+      <div class="union-edit-content" style="max-width: 90%; max-height: 90%; overflow-y: auto;">
+        <h3>Редактирование всех союзов</h3>
+        <div id="editAllTexts"></div>
+        <div style="margin-top: 20px; text-align: right;">
+          <button class="btn" onclick="saveAllUnionsEdit()" style="background: #28a745; margin-right: 10px;">Сохранить все</button>
+          <button class="btn" onclick="closeUnionEdit()" style="background: #6c757d;">Отмена</button>
+        </div>
+      </div>
+    `;
+    
+    // Заполняем тексты для редактирования (только последующие тексты)
+    const editTextsDiv = modal.querySelector('#editAllTexts');
+    for (let i = 2; i <= 12; i++) { // Начинаем с текста 2, так как текст 1 не редактируется
+      const textElement = document.querySelector(`[id*="-text${i}"]`);
+      if (textElement) {
+        const unionId = textElement.id.match(/union-(\d+)-/)[1];
+        editTextsDiv.innerHTML += `
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Текст ${i} (Союз ${unionId}):</label>
+            <textarea id="editAllText-${unionId}-${i}" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">${textElement.textContent}</textarea>
+          </div>
+        `;
+      }
+    }
+    
+    document.body.appendChild(modal);
+  }
+  
+  function saveAllUnionsEdit() {
+    // Сохраняем все отредактированные тексты
+    for (let i = 2; i <= 12; i++) {
+      const textElement = document.querySelector(`[id*="-text${i}"]`);
+      if (textElement) {
+        const unionId = textElement.id.match(/union-(\d+)-/)[1];
+        const editTextarea = document.getElementById(`editAllText-${unionId}-${i}`);
+        if (editTextarea) {
+          textElement.textContent = editTextarea.value;
+          textElement.setAttribute('data-text', editTextarea.value);
+        }
+      }
+    }
+    
+    // Сохраняем союзы
+    saveUnions();
+    
+    // Закрываем модальное окно
+    closeUnionEdit();
+    
+    alert('Все тексты союзов сохранены!');
+  }
+  
+  function editUnion(unionId) {
+    const password = prompt('Введите пароль для редактирования:');
+    if (password !== '1111') {
+      alert('Неверный пароль!');
+      return;
+    }
+    
+    // Создаем модальное окно для редактирования
+    const modal = document.createElement('div');
+    modal.className = 'union-edit-modal';
+    modal.innerHTML = `
+      <div class="union-edit-content">
+        <h3>Редактирование текстов союза</h3>
+        <div id="editTexts-${unionId}"></div>
+        <div style="margin-top: 20px; text-align: right;">
+          <button class="btn" onclick="saveUnionEdit(${unionId})" style="background: #28a745; margin-right: 10px;">Сохранить</button>
+          <button class="btn" onclick="closeUnionEdit()" style="background: #6c757d;">Отмена</button>
+        </div>
+      </div>
+    `;
+    
+    // Заполняем тексты для редактирования
+    const editTextsDiv = modal.querySelector(`#editTexts-${unionId}`);
+    for (let i = 1; i <= 12; i++) {
+      const textElement = document.getElementById(`union-${unionId}-text${i}`);
+      if (textElement) {
+        const originalText = textElement.getAttribute('data-text');
+        editTextsDiv.innerHTML += `
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Текст ${i}:</label>
+            <textarea class="union-edit-textarea" id="editText${i}-${unionId}" data-original="${originalText}">${originalText}</textarea>
+          </div>
+        `;
+      }
+    }
+    
+    document.body.appendChild(modal);
+  }
+  
+  function saveUnionEdit(unionId) {
+    // Сохраняем изменения
+    for (let i = 1; i <= 12; i++) {
+      const textElement = document.getElementById(`union-${unionId}-text${i}`);
+      const editElement = document.getElementById(`editText${i}-${unionId}`);
+      
+      if (textElement && editElement) {
+        const newText = editElement.value;
+        textElement.innerHTML = newText.replace(/\n/g, '<br>');
+        textElement.setAttribute('data-text', newText);
+      }
+    }
+    
+    closeUnionEdit();
+  }
+  
+  function closeUnionEdit() {
+    const modal = document.querySelector('.union-edit-modal');
+    if (modal) {
+      modal.remove();
+    }
+  }
+  
+  
+  function deleteUnion(unionId) {
+    const password = prompt('Введите пароль для удаления союза:');
+    if (password !== '1111') {
+      alert('Неверный пароль!');
+      return;
+    }
+    
+    if (confirm('Вы уверены, что хотите удалить этот союз?')) {
+      const unionElement = document.getElementById(`union-${unionId}`);
+      if (unionElement) {
+        unionElement.remove();
+      }
+    }
+  }
+  
+      
+
+  // Тестовая функция для проверки сохранения подписей
+  function testSignaturePersistence() {
+    console.log('=== TESTING SIGNATURE PERSISTENCE ===');
+    console.log('Current unions:', unions);
+    
+    // Проверяем, есть ли союзы с подписями
+    unions.forEach((union, index) => {
+      console.log(`Union ${index + 1} (ID: ${union.id}):`);
+      console.log('  - Player name:', union.playerName);
+      console.log('  - Signature:', union.signature ? 'EXISTS' : 'NONE');
+      console.log('  - Signature HTML:', union.signatureHTML ? 'EXISTS' : 'NONE');
+      console.log('  - Concluded:', union.concluded);
+      
+      if (union.signature) {
+        console.log('  - Signature type:', union.signature.startsWith('data:image/') ? 'DATA_URL' : 'OTHER');
+        console.log('  - Signature length:', union.signature.length);
+      }
+      
+      if (union.signatureHTML) {
+        console.log('  - SignatureHTML length:', union.signatureHTML.length);
+        console.log('  - Contains canvas:', union.signatureHTML.includes('<canvas'));
+      }
+    });
+    
+    console.log('=== END TEST ===');
+  }
+  
+  // Инициализация союзов при загрузке страницы
+  document.addEventListener('DOMContentLoaded', function() {
+    loadUnions();
+    
+    // Добавляем тестовую функцию в глобальную область видимости
+    window.testSignaturePersistence = testSignaturePersistence;
+  });
+  
+</script>
+<script>
+  (function(){
+    function cfGetCurrentTurnNumber(){
+      try { return parseInt(localStorage.getItem('cf_turn_number')||'1',10)||1; } catch { return 1; }
+    }
+    function cfRestoreTurnComment(){
+      try {
+        const el = document.getElementById('turnComment');
+        if (!el) return;
+        const t = cfGetCurrentTurnNumber();
+        const saved = localStorage.getItem('cf_turn_comment_'+t) || '';
+        if (el.value !== saved) el.value = saved;
+        if (!el._cfWired){
+          el._cfWired = true;
+          el.addEventListener('input', ()=>{
+            try { localStorage.setItem('cf_turn_comment_'+cfGetCurrentTurnNumber(), el.value || ''); } catch {}
+          });
+        }
+      } catch {}
+    }
+    function cfPatchRenderMoves(){
+      try {
+        const orig = window.renderMoves;
+        if (typeof orig === 'function' && !orig._cfPatched){
+          const wrapped = function(){
+            const res = orig.apply(this, arguments);
+            try { cfRestoreTurnComment(); } catch {}
+            return res;
+          };
+          wrapped._cfPatched = true;
+          window.renderMoves = wrapped;
+        }
+      } catch {}
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      cfPatchRenderMoves();
+      setTimeout(cfRestoreTurnComment, 0);
+    });
+    setTimeout(cfPatchRenderMoves, 1000);
+  })();
+</script>
+</script>
+<script>
+  (function(){
+    const STORAGE_KEY = 'errorHistoryLogV1';
+    const MAX_ITEMS = 200;
+    function readLog(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') || []; } catch { return []; } }
+    function writeLog(arr){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr.slice(-MAX_ITEMS))); } catch {}
+    }
+    function normalize(err){
+      if (!err) return {};
+      if (err instanceof Error) return { message: err.message, stack: String(err.stack||'') };
+      if (typeof err === 'string') return { message: err };
+      try { return { message: JSON.stringify(err) }; } catch { return { message: String(err) }; }
+    }
+    function pushEntry(entry){
+      const log = readLog();
+      const last = log[log.length-1];
+      const signature = `${entry.message}|${entry.source||''}|${entry.line||''}|${entry.col||''}`;
+      const lastSig = last ? `${last.message}|${last.source||''}|${last.line||''}|${last.col||''}` : '';
+      if (signature === lastSig) {
+        last.repeat = (last.repeat||1) + 1;
+        last.lastAt = entry.time;
+        writeLog(log);
+        return;
+      }
+      log.push(entry);
+      writeLog(log);
+    }
+    function formatLocation(source, line, col){
+      if (!source && !line) return '';
+      let s = source ? source.split('?')[0] : '';
+      if (s.startsWith(location.origin)) s = s.slice(location.origin.length);
+      return `${s}:${line || 0}:${col || 0}`;
+    }
+    function toEntry(o){
+      return {
+        time: new Date().toLocaleString(),
+        type: o.type || 'error',
+        message: o.message || 'Unknown error',
+        source: o.source || '',
+        line: o.lineno || o.line || 0,
+        col: o.colno || o.col || 0,
+        stack: o.stack || (o.error && o.error.stack) || (o.reason && o.reason.stack) || '',
+        userAgent: navigator.userAgent
+      };
+    }
+    window.viewErrorHistory = function(){
+      const data = readLog();
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100000;display:flex;align-items:center;justify-content:center;';
+      const panel = document.createElement('div');
+      panel.style.cssText = 'background:#111;color:#eee;max-width:95%;max-height:85%;width:1000px;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden;font-family:Consolas,Menlo,monospace;font-size:12px;';
+      const header = document.createElement('div');
+      header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#1f2937;border-bottom:1px solid #374151;';
+      header.innerHTML = '<div style="font-weight:700">История ошибок</div>';
+      const buttons = document.createElement('div');
+      const clearBtn = document.createElement('button');
+      clearBtn.textContent = 'Очистить';
+      clearBtn.style.cssText = 'background:#dc2626;margin-right:8px;font-size:12px;padding:6px 10px;border:none;border-radius:4px;cursor:pointer;color:#fff;';
+      clearBtn.onclick = function(){ localStorage.removeItem(STORAGE_KEY); overlay.remove(); };
+      const closeBtn = document.createElement('button');
+      closeBtn.textContent = 'Закрыть';
+      closeBtn.style.cssText = 'background:#4a90e2;font-size:12px;padding:6px 10px;border:none;border-radius:4px;cursor:pointer;color:#fff;';
+      closeBtn.onclick = function(){ overlay.remove(); };
+      buttons.appendChild(clearBtn); buttons.appendChild(closeBtn); header.appendChild(buttons);
+      const list = document.createElement('div');
+      list.style.cssText = 'overflow:auto;flex:1;padding:10px 12px;white-space:pre-wrap;word-break:break-word;';
+      if (!data.length) {
+        list.textContent = 'Пока нет записей об ошибках.';
+      } else {
+        list.innerHTML = data.map((e, idx) => {
+          const loc = formatLocation(e.source, e.line, e.col);
+          const rep = e.repeat && e.repeat>1 ? ` (повторено ${e.repeat}×, последнее: ${e.lastAt})` : '';
+          const stack = e.stack ? `\n${e.stack}` : '';
+          return `[${idx+1}] ${e.time} ${e.type || 'error'}${rep}\nСообщение: ${e.message}\nИсточник: ${loc}${stack}`;
+        }).join('\n\n');
+      }
+      panel.appendChild(header); panel.appendChild(list); overlay.appendChild(panel); document.body.appendChild(overlay);
+      overlay.onclick = (ev)=>{ if (ev.target===overlay) overlay.remove(); };
+    };
+    window.showErrors = window.viewErrorHistory;
+    window.throwTestError = function(){ throw new Error('Test error for history'); };
+    window.addEventListener('error', function(e){
+      try {
+        const base = normalize(e.error);
+        const entry = toEntry({
+          type: 'error',
+          message: base.message || e.message,
+          source: e.filename || (e.error && e.error.fileName) || '',
+          lineno: e.lineno,
+          colno: e.colno,
+          stack: base.stack
+        });
+        pushEntry(entry);
+      } catch {}
+    }, true);
+    window.addEventListener('unhandledrejection', function(e){
+      try {
+        const base = normalize(e.reason);
+        const entry = toEntry({
+          type: 'unhandledrejection',
+          message: base.message || 'Unhandled promise rejection',
+          source: '',
+          stack: base.stack
+        });
+        pushEntry(entry);
+      } catch {}
+    });
+    const prevOnError = window.onerror;
+    window.onerror = function(message, source, lineno, colno, error){
+      try {
+        const base = normalize(error||message);
+        const entry = toEntry({ type:'onerror', message: base.message||String(message), source, line: lineno, col: colno, stack: base.stack });
+        pushEntry(entry);
+      } catch {}
+      if (typeof prevOnError === 'function') try { return prevOnError.apply(this, arguments); } catch {}
+      return false;
+    };
+  })();
+</script>
 </body>
 </html>
