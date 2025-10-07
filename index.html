@@ -22,6 +22,20 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
 .row>div{flex:1 1 auto;min-width:0}
 .partner-money{flex-direction:column !important;align-items:stretch !important;gap:8px !important;margin-bottom:12px !important}
 .row>div{flex:1 1 120px;min-width:90px}
+/* Мобильная оптимизация для полей ввода акций */
+@media (max-width: 480px) {
+  .row[style*="gap:20px"] { gap: 8px !important; }
+  .row[style*="gap:20px"] > div { min-width: 100px !important; }
+  /* Оптимизация шаблонов на мобильных */
+  #buySymbolTpls, #buyPriceTpls {
+    margin-top: 4px !important;
+  }
+  #buySymbolTpls span, #buyPriceTpls span {
+    font-size: 12px !important;
+    padding: 3px 8px !important;
+    margin: 1px !important;
+  }
+}
 .partner-money>div{margin:0 !important}
 .partner-money select,.partner-money input,.partner-money button{margin:0 !important}
 .btn{background:var(--c1);color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:16px}
@@ -2347,10 +2361,10 @@ button:focus,button:focus-visible,.btn:focus,.btn:focus-visible{outline:none !im
 
   <!-- Поля ввода в одной строке -->
   <div class="row" style="gap:20px;align-items:flex-end">
-    <div style="flex:1;min-width:200px">
+    <div style="flex:1;min-width:120px">
       <input id="buySymbol" placeholder="Название акции" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px">
     </div>
-    <div style="flex:1;min-width:200px">
+    <div style="flex:1;min-width:120px">
       <input id="buyPrice" type="number" step="0.01" placeholder="Курс" onfocus="clearZeroOnFocus(this)" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px">
     </div>
   </div>
@@ -2397,7 +2411,7 @@ button:focus,button:focus-visible,.btn:focus,.btn:focus-visible{outline:none !im
     </div>
     
     <!-- Кнопки управления под сводкой -->
-    <div class="row" style="align-items:center;gap:8px;margin-bottom:16px;justify-content:center">
+  <div class="row" style="align-items:center;gap:8px;margin-bottom:16px;justify-content:center" id="buyTableControlsRow">
       <div style="flex:0 0 auto">
         <input id="buyTurnInputTable" placeholder="Ход" style="width:90px;padding:6px 8px;font-size:14px" onfocus="clearZeroOnFocus(this)">
       </div>
@@ -4690,6 +4704,114 @@ function placeEasyBuyAtBottom(){
     }
   }catch{}
 }
+
+// Делегированный клик по крестику в табличном виде — на случай, если рендер перезаписывает обработчик или id отличается
+document.addEventListener('click', function(e){
+  try{
+    const t = e.target;
+    if (!t) return;
+    // Явно наш крестик
+    if (t.id === 'clearBuyFieldsIconTable' || (t.closest && t.closest('#clearBuyFieldsIconTable'))){
+      try{ e.preventDefault(); e.stopPropagation(); }catch{}
+      const id = (t.id || (t.closest && t.closest('#clearBuyFieldsIconTable') && 'clearBuyFieldsIconTable')) || '';
+      console.log('[CF] delegate: clearBuyFieldsIconTable clicked by', id);
+      try{ clearBuyFieldsTable(); }catch{}
+      return;
+    }
+    // Любой крестик внутри контейнера табличного вида
+    const container = document.getElementById('buyTableViewContainer');
+    if (container && container.contains(t)){
+      const title = (t.getAttribute && (t.getAttribute('title')||'')) || '';
+      const txt = (t.textContent||'').trim();
+      const isCross = txt === '✖' || /очистить/i.test(title);
+      if (isCross){
+        console.log('[CF] delegate: cross inside table view clicked');
+        try{ clearBuyFieldsTable(); }catch{}
+      }
+    }
+  }catch{}
+}, true);
+
+// Гарантируем стиль для выделенных нулей, который не исчезает после hover
+(function ensureZeroSelectedStyle(){
+  try{
+    if (document.getElementById('cfZeroSelCSS')) return;
+    const st = document.createElement('style');
+    st.id = 'cfZeroSelCSS';
+    st.textContent = `
+      /* Не даем inline-обработчикам onmouseover/onmouseout перетираť подсветку нулей */
+      .cf-zero-selected{ background:#007bff !important; color:#fff !important; box-shadow:none !important; border-color:#007bff !important; }
+      .cf-zero-selected:hover{ background:#007bff !important; color:#fff !important; }
+      td.cf-zero-selected{ background:#007bff !important; color:#fff !important; }
+    `;
+    document.head.appendChild(st);
+  }catch{}
+})();
+
+// ——— Стабилизация поля "Ход" в табличном виде — сохраняем и восстанавливаем из localStorage
+(function persistTurnInputTable(){
+  try{
+    const LS_KEY = 'cf_buy_turn_table';
+    // Восстановим при старте, если поле уже отрисовано
+    setTimeout(()=>{
+      try{
+        const el = document.getElementById('buyTurnInputTable');
+        const saved = localStorage.getItem(LS_KEY);
+        if (el && saved !== null && saved !== undefined) el.value = saved;
+      }catch{}
+    }, 0);
+    // Делегированный обработчик ввода/изменений — сохраняем мгновенно
+    const saveHandler = function(e){
+      try{
+        const t = e.target;
+        if (!t || t.id !== 'buyTurnInputTable') return;
+        localStorage.setItem(LS_KEY, t.value || '');
+      }catch{}
+    };
+    document.addEventListener('input', saveHandler, true);
+    document.addEventListener('change', saveHandler, true);
+    // Сохраним и при клике по кнопке очистки — до фактического сброса
+    try{
+      const btn = document.getElementById('clearBuyFieldsIconTable');
+      if (btn){
+        btn.addEventListener('mousedown', ()=>{
+          try{ const el = document.getElementById('buyTurnInputTable'); if (el) localStorage.setItem(LS_KEY, el.value||''); }catch{}
+        }, true);
+      }
+    }catch{}
+
+    // Диагностика верной кнопки (табличный крестик): логируем mousedown/click, id и текущее значение поля хода
+    try{
+      const wireDiag = (btn)=>{
+        ['mousedown','click'].forEach(type=>{
+          btn.addEventListener(type, (e)=>{
+            try{
+              const el = document.getElementById('buyTurnInputTable');
+              console.log('[CF] tableCross', type, {
+                eventTargetId: e.target && e.target.id,
+                buttonId: btn.id,
+                title: btn.title,
+                turnId: 'buyTurnInputTable',
+                turnExists: !!el,
+                turnVal: el ? el.value : undefined
+              });
+            }catch{}
+          }, true);
+        });
+      };
+      const diagBtn = document.getElementById('clearBuyFieldsIconTable');
+      if (diagBtn) wireDiag(diagBtn);
+    }catch{}
+    // Хелпер для явного восстановления
+    window._restoreTurnInputTable = function(){
+      try{
+        const el = document.getElementById('buyTurnInputTable');
+        const saved = localStorage.getItem(LS_KEY);
+        if (el && saved !== null && saved !== undefined) el.value = saved;
+      }catch{}
+    };
+  }catch{}
+})();
 function showToast(msg, ms){const t=$('#toast');const d=(typeof ms==='number'&&ms>=0)?ms:1800;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
 function fmt(n){return (!n&&n!==0)?'':(Number.isInteger(n)?n.toFixed(0):n.toFixed(2));}
 // Форматирование чисел (ru-RU) с управлением дробной частью
@@ -9178,6 +9300,22 @@ function renderBuy(){
   participants.forEach(p=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${p}</td><td><div style="display:flex;gap:6px;align-items:center;justify-content:center"><button class="actBtn buyQuick" data-p="${p}" title="Быстрый ввод">⚡</button><input type="number" min="0" class="buySum" data-p="${p}" value="" onfocus="clearZeroOnFocus(this)"></div></td><td class="buyQty">0</td>`;tbl.appendChild(tr);});
   // Восстанавливаем временные значения
   loadBuyTempFields();
+  // Если ранее в табличном виде поля были очищены — не восстанавливаем название/цену
+  try{
+    const cleared = localStorage.getItem('cf_buyCleared');
+    console.log('CF DEBUG: renderBuy - cf_buyCleared flag:', cleared);
+    if (cleared === '1'){
+      console.log('CF DEBUG: renderBuy - clearing fields due to cleared flag');
+      const sym = document.getElementById('buySymbol');
+      const pr = document.getElementById('buyPrice');
+      console.log('CF DEBUG: renderBuy - before clear - symbol:', sym?.value, 'price:', pr?.value);
+      if (sym) sym.value = '';
+      if (pr) pr.value = '';
+      console.log('CF DEBUG: renderBuy - after clear - symbol:', sym?.value, 'price:', pr?.value);
+      localStorage.removeItem('cf_buyCleared');
+      console.log('CF DEBUG: renderBuy - removed cf_buyCleared flag');
+    }
+  }catch{}
   tbl.querySelectorAll('.buySum').forEach(inp=>{
     inp.oninput=()=>{updateBuyCalc();saveBuyTempFields();};
     inp.onchange=()=>{updateBuyCalc();saveBuyTempFields();};
@@ -9205,6 +9343,28 @@ function renderBuy(){
   renderBuyDeals();
   // Обновляем заголовки после рендера всех элементов
   setTimeout(() => updateBuyHeaders(), 0);
+  // Табличный вид: точная кнопка "Сохранить сделку" — хук на очистку названия и курса
+  setTimeout(()=>{
+    try{
+      const btn = document.querySelector('#buyTableControlsRow > div:nth-child(2) > button.btn');
+      console.log('CF DEBUG: Found tabular save button:', btn, btn?.textContent?.trim());
+      if (btn && !btn.dataset.cfHooked){
+        btn.dataset.cfHooked = '1';
+        console.log('CF DEBUG: Hooking tabular save button');
+        const orig = btn.onclick;
+        btn.onclick = function(ev){
+          console.log('CF DEBUG: Tabular save button clicked!');
+          // СНАЧАЛА ставим флаг, чтобы предотвратить восстановление
+          try{ localStorage.setItem('cf_buyCleared','1'); }catch{}
+          console.log('CF DEBUG: Set cf_buyCleared flag BEFORE save');
+          try{ if (typeof orig === 'function') orig.call(this, ev); }catch{}
+          // После штатного сохранения — очищаем поля как крестик
+          console.log('CF DEBUG: Calling clearBuyFieldsTable after save');
+          try{ clearBuyFieldsTable(); }catch{}
+        };
+      }
+    }catch(e){ console.log('CF DEBUG: Error hooking button:', e); }
+  }, 0);
   // Инициализируем поле ввода хода по умолчанию текущим номером
   try{
     const t = parseInt(localStorage.getItem('cf_turn_number')||'1',10)||1;
@@ -9498,13 +9658,277 @@ function updateBuyCalc(){
 // Полная очистка полей покупки (участники, название, курс)
 function clearBuyFields(){
   try{
+    try{ console.log('[CF] clearBuyFields(): invoked'); }catch{}
     const symEl = document.getElementById('buySymbol');
     const priceEl = document.getElementById('buyPrice');
     if (symEl) symEl.value = '';
     if (priceEl) priceEl.value = '';
-    document.querySelectorAll('.buySum').forEach(inp=>{ inp.value=''; });
+    // Чистим поля участников в обычном виде + уведомляем слушателей
+    const sums = Array.from(document.querySelectorAll('#buyNormalView .buySum'));
+    let cleared = 0;
+    sums.forEach(inp=>{
+      try{
+        // Полная очистка для input[type=number]
+        inp.value='';
+        try{ inp.valueAsNumber = NaN; }catch{}
+        inp.setAttribute('value','');
+        inp.defaultValue = '';
+        try{ inp.dispatchEvent(new Event('input',{bubbles:true})); }catch{}
+        try{ inp.dispatchEvent(new Event('change',{bubbles:true})); }catch{}
+        cleared++;
+      }catch{}
+    });
+    try{ console.log('[CF] clearBuyFields(): cleared buySum inputs =', cleared); }catch{}
     localStorage.removeItem('cf_buyTemp');
-    updateBuyCalc();
+    // Пересчёт и обновление сводок после очистки
+    try{ updateBuyCalc(); }catch{}
+    try{ updateBuyHeaders(); }catch{}
+    // Если какие-то обработчики удерживают старые значения — перерисуем обычный вид
+    try{ renderBuy(); }catch{}
+  }catch{}
+}
+
+// Делегирование для крестика обычного вида на случай, если прямой onclick не срабатывает
+document.addEventListener('click', function(e){
+  try{
+    const t = e.target;
+    if (!t) return;
+    const isNormalClear = (t.id === 'clearBuyFieldsIcon') || (t.closest && t.closest('#clearBuyFieldsIcon'));
+    if (isNormalClear){
+      console.log('[CF] delegate: clearBuyFieldsIcon clicked');
+      try{ clearBuyFields(); }catch{}
+      return;
+    }
+    // По XPath, который вы прислали, это вторая кнопка в controls обычного вида – подстрахуемся и по контейнеру
+    const normalRow = document.querySelector('#buyNormalView .row div[style*="align-items:center"]') || document.querySelector('#buyNormalView .row');
+    if (normalRow && normalRow.contains(t)){
+      const buttons = Array.from(normalRow.querySelectorAll('button'));
+      const idx = buttons.indexOf(t.closest('button'));
+      if (idx === 1){ // вторая кнопка
+        console.log('[CF] delegate: normal-view second button clicked (fallback)');
+        try{ clearBuyFields(); }catch{}
+      }
+    }
+  }catch{}
+}, true);
+// Табличный вид: крестик рядом с "Сохранить сделку" должен чистить только название и цену, не трогая поле хода
+function clearBuyFieldsTable(){
+  try{
+    try{
+      const t1v = (document.getElementById('buyTurnInputTable')||{}).value;
+      const t2v = (document.getElementById('buyTurnInput')||{}).value;
+      const lsv = localStorage.getItem('cf_buy_turn_table');
+      console.log('[CF] clearBuyFieldsTable(): invoked', {time:new Date().toLocaleTimeString(), t1:t1v, t2:t2v, ls:lsv});
+    }catch{}
+    // Сохраняем значение поля "Ход" (и для табличного, и для обычного вида) и вернём его после любых пересчётов
+    let turnRefs = [];
+    try{
+      const t1 = document.getElementById('buyTurnInputTable');
+      const t2 = document.getElementById('buyTurnInput');
+      if (t1) turnRefs.push({el:t1, val:t1.value});
+      if (t2) turnRefs.push({el:t2, val:t2.value});
+    }catch{}
+    try{
+      const btn = document.getElementById('clearBuyFieldsIconTable');
+      if (btn) console.log('[CF] clearBuyFieldsTable(): button found and wired:', btn.id, 'onclick=', !!btn.getAttribute('onclick'));
+      else console.warn('[CF] clearBuyFieldsTable(): button NOT found by id clearBuyFieldsIconTable');
+    }catch{}
+    const symEl = document.getElementById('buySymbol');
+    const priceEl = document.getElementById('buyPrice');
+    console.log('CF DEBUG: clearBuyFieldsTable - Before clear - symbol:', symEl?.value, 'price:', priceEl?.value);
+    if (symEl){
+      symEl.value = '';
+      try{ symEl.setAttribute('value',''); symEl.defaultValue=''; }catch{}
+      try{ symEl.dispatchEvent(new Event('input',{bubbles:true})); }catch{}
+      try{ symEl.dispatchEvent(new Event('change',{bubbles:true})); }catch{}
+    }
+    if (priceEl){
+      priceEl.value = '';
+      try{ priceEl.setAttribute('value',''); priceEl.defaultValue=''; }catch{}
+      try{ priceEl.dispatchEvent(new Event('input',{bubbles:true})); }catch{}
+      try{ priceEl.dispatchEvent(new Event('change',{bubbles:true})); }catch{}
+    }
+    console.log('CF DEBUG: clearBuyFieldsTable - After clear - symbol:', symEl?.value, 'price:', priceEl?.value);
+    try{ if (window.lastBuy){ window.lastBuy.symbol=''; window.lastBuy.price=''; } }catch{}
+    // Помечаем, что поля очищены, чтобы не восстановились при возврате на вкладку
+    try{ localStorage.setItem('cf_buyCleared','1'); }catch{}
+    // Пересчёт/обновление, но БЕЗ сохранения черновика cf_buyTemp,
+    // чтобы после смены вкладки поля не восстановились
+    try{
+      try{ localStorage.removeItem('cf_buyTemp'); }catch{}
+      if (typeof updateBuyCalc === 'function') updateBuyCalc();
+      if (typeof updateBuyHeaders === 'function') updateBuyHeaders();
+      // Дополнительно подстрахуемся восстановлением из LS
+      try{ if (typeof window._restoreTurnInputTable === 'function') window._restoreTurnInputTable(); }catch{}
+      // Немедленно восстанавливаем
+      turnRefs.forEach(r=>{ try{ r.el.value = r.val; }catch{} });
+      // И с небольшими задержками — если что-то перезапишет позже
+      const logRestore = (tag)=>{
+        try{
+          const t1v=(document.getElementById('buyTurnInputTable')||{}).value;
+          const t2v=(document.getElementById('buyTurnInput')||{}).value;
+          console.log('[CF] restore', tag, {t1:t1v, t2:t2v});
+        }catch{}
+      };
+      setTimeout(()=>{ turnRefs.forEach(r=>{ try{ r.el.value = r.val; }catch{} }); logRestore('+0ms'); }, 0);
+      setTimeout(()=>{ turnRefs.forEach(r=>{ try{ r.el.value = r.val; }catch{} }); logRestore('+60ms'); }, 60);
+      setTimeout(()=>{ turnRefs.forEach(r=>{ try{ r.el.value = r.val; }catch{} }); logRestore('+120ms'); }, 120);
+      setTimeout(()=>{ turnRefs.forEach(r=>{ try{ r.el.value = r.val; }catch{} }); logRestore('+250ms'); }, 250);
+      setTimeout(()=>{ turnRefs.forEach(r=>{ try{ r.el.value = r.val; }catch{} }); logRestore('+500ms'); }, 500);
+      // Дополнительно держим поля Название/Цена пустыми в течение 2с, на случай поздних обработчиков
+      try{
+        const keepStart = Date.now();
+        const guard = setInterval(()=>{
+          try{
+            const s = document.getElementById('buySymbol');
+            const p = document.getElementById('buyPrice');
+            if (s && s.value){ s.value=''; s.setAttribute('value',''); }
+            if (p && p.value){ p.value=''; p.setAttribute('value',''); }
+            if (Date.now() - keepStart > 2000){ clearInterval(guard); }
+          }catch{}
+        }, 100);
+      }catch{}
+      // Усиленная защита: 3 секунды поддерживаем сохранённое значение каждые 100мс
+      try{
+        const start = Date.now();
+        const keep = setInterval(()=>{
+          try{
+            const el = document.getElementById('buyTurnInputTable');
+            if (el){
+              const want = (turnRefs.find(x=>x.el.id==='buyTurnInputTable')||turnRefs[0]||{}).val || localStorage.getItem('cf_buy_turn_table') || '';
+              if (el.value !== want){ el.value = want; el.setAttribute('value', want); }
+            }
+            if (Date.now() - start > 3000) { clearInterval(keep); console.log('[CF] restore loop stopped'); }
+          }catch{}
+        }, 100);
+      }catch{}
+
+      // Наблюдатель за внезапным очистителем: если кто-то стирает поле — тут же возвращаем
+      try{
+        const el = document.getElementById('buyTurnInputTable');
+        const prevVal = (turnRefs.find(x=>x.el.id==='buyTurnInputTable')||turnRefs[0]||{}).val || localStorage.getItem('cf_buy_turn_table') || '';
+        if (el){
+          try{
+            // На время защиты делаем поле readonly, чтобы пользователь случайно не сбил восстановление
+            el.readOnly = true;
+            el.dataset.cfGuard = '1';
+            el.style.caretColor = 'transparent';
+            setTimeout(()=>{ try{ el.readOnly = false; delete el.dataset.cfGuard; el.style.caretColor=''; }catch{} }, 2000);
+          }catch{}
+          console.log('[CF] guard: start for buyTurnInputTable, prevVal=', prevVal);
+          const until = Date.now() + 2000; // 2 сек после клика
+          const mo = new MutationObserver(()=>{
+            try{
+              if (Date.now() > until) { mo.disconnect(); return; }
+              if (el.value !== prevVal){
+                console.warn('[CF] observer: buyTurnInputTable changed to', el.value, '→ restore to', prevVal);
+                el.value = prevVal; el.setAttribute('value', prevVal);
+                localStorage.setItem('cf_buy_turn_table', prevVal);
+              }
+            }catch{}
+          });
+          mo.observe(el, { attributes:true, attributeFilter:['value'] });
+          // Также подстрахуемся на событиях
+          const guard = ()=>{
+            try{
+              if (Date.now() > until) { el.removeEventListener('input', guard, true); el.removeEventListener('change', guard, true); return; }
+              if (el.value !== prevVal){ el.value = prevVal; el.setAttribute('value', prevVal); localStorage.setItem('cf_buy_turn_table', prevVal); }
+            }catch{}
+          };
+          el.addEventListener('input', guard, true);
+          el.addEventListener('change', guard, true);
+        }
+      }catch{}
+    }catch{}
+
+    // Снять выбор с кнопок в табличном виде (как после сохранения сделки)
+    try{
+      const container = document.getElementById('buyTableViewContainer');
+      console.log('[CF] clearBuyFieldsTable(): container found?', !!container);
+      if (container){
+        // Визуальная подсветка контейнера на 400мс, чтобы убедиться, что сбрасываем именно ту таблицу
+        try{
+          const prevOutline = container.style.outline;
+          container.style.outline = '2px dashed #c33';
+          setTimeout(()=>{ try{ container.style.outline = prevOutline || ''; }catch{} }, 400);
+        }catch{}
+
+        const selectedBefore = container.querySelectorAll('.active, .btn-checkmark, .selected, .is-selected, .current, .highlight, .hl, .sel, [aria-pressed="true"]').length;
+        console.log('[CF] clearBuyFieldsTable(): selected elements BEFORE:', selectedBefore);
+        // Снимаем визуальные классы выбора
+        container.querySelectorAll('.active, .btn-checkmark, .selected, .is-selected, .current, .highlight, .hl, .sel').forEach(el=>{
+          el.classList.remove('active','btn-checkmark','selected','is-selected','current','highlight','hl','sel');
+        });
+        // Сбрасываем aria-pressed и пользовательские флаги
+        container.querySelectorAll('[aria-pressed="true"]').forEach(el=>{
+          el.setAttribute('aria-pressed','false');
+        });
+        container.querySelectorAll('[data-selected]').forEach(el=>{
+          el.removeAttribute('data-selected');
+        });
+        // Попробуем сбросить инлайн-подсветку только у выбранных кнопок
+        container.querySelectorAll('button, [role="button"]').forEach(el=>{
+          const bg = (el.style && (el.style.background || el.style.backgroundColor));
+          // Эвристика: сбрасываем только явные синие/выделенные фоны
+          if (bg && /#4a90e2|rgb\(\s*74\s*,\s*144\s*,\s*226\s*\)|e6e6ff|f0f8ff|3b82f6/i.test(bg)){
+            el.style.background = '';
+            el.style.backgroundColor = '';
+            el.style.color = '';
+            el.style.borderColor = '';
+            el.style.boxShadow = '';
+          }
+        });
+
+        // Принудительно выбрать «0» в каждой строке/группе числовых кнопок
+        // Логика: найти контейнеры-строки, где есть несколько кнопок с цифрами, и кликнуть по «0» если есть
+        // 1) Явные кнопки с текстом "0"
+        const zeroButtons = Array.from(container.querySelectorAll('button, [role="button"]'))
+          .filter(el=> (el.textContent||'').trim() === '0');
+        console.log('[CF] clearBuyFieldsTable(): zero buttons found:', zeroButtons.length);
+        // 2) Если встречаются группы без явного role, пройдемся по строкам и выберем первую «0» в каждой
+        const rows = Array.from(container.querySelectorAll('[class*="row"], tr, .grid, .line'));
+        const clicked = new Set();
+        rows.forEach(r=>{
+          const btn0 = Array.from(r.querySelectorAll('button, [role="button"], td, .cell, .num'))
+            .find(el=> (el.textContent||'').trim() === '0');
+          if (btn0 && !clicked.has(btn0)){
+            try{ btn0.click(); }catch{}
+            try{
+              btn0.classList && btn0.classList.add('cf-zero-selected','selected');
+              // Принудительно выставим стиль как у выбранной ячейки (на случай инлайновых onmouseout)
+              btn0.style.background = '#007bff';
+              btn0.style.color = '#fff';
+            }catch{}
+            clicked.add(btn0);
+          }
+        });
+        // На всякий случай — если кнопки с «0» вне строк, кликнем по всем найденным «0» (неповредит)
+        zeroButtons.forEach(b=>{ try{ b.click(); b.classList && b.classList.add('cf-zero-selected','selected'); b.style.background = '#007bff'; b.style.color = '#fff'; }catch{} });
+        console.log('[CF] clearBuyFieldsTable(): rows inspected:', rows.length, 'clicked zeros:', clicked.size);
+        const selectedAfter = container.querySelectorAll('.active, .btn-checkmark, .selected, .is-selected, .current, .highlight, .hl, .sel, [aria-pressed="true"]').length;
+        console.log('[CF] clearBuyFieldsTable(): selected elements AFTER:', selectedAfter);
+        if (selectedAfter > 0) {
+          const still = Array.from(container.querySelectorAll('.active, .btn-checkmark, .selected, .is-selected, .current, .highlight, .hl, .sel, [aria-pressed="true"]'))
+            .slice(0,20)
+            .map(el=>({tag:el.tagName, txt:(el.textContent||'').trim(), cls:el.className, aria:el.getAttribute('aria-pressed')}));
+          console.warn('[CF] clearBuyFieldsTable(): some selections remain, sample:', still);
+          // Фолбэк: возможно, числа — это ячейки таблицы, а не кнопки. Попробуем кликнуть по ячейкам с текстом "0" в каждой строке
+          let tdClicks = 0;
+          const rowEls = Array.from(container.querySelectorAll('tr'));
+          rowEls.forEach(tr=>{
+            const tds = Array.from(tr.querySelectorAll('td, .cell, .num'));
+          const td0 = tds.find(td=> (td.textContent||'').trim() === '0');
+          if (td0){ try{ td0.click(); td0.classList && td0.classList.add('cf-zero-selected','selected'); td0.style.background = '#007bff'; td0.style.color = '#fff'; tdClicks++; }catch{} }
+          });
+          console.log('[CF] clearBuyFieldsTable(): fallback td zeros clicked:', tdClicks);
+          const selectedAfterTd = container.querySelectorAll('.active, .btn-checkmark, .selected, .is-selected, .current, .highlight, .hl, .sel, [aria-pressed="true"]').length;
+          console.log('[CF] clearBuyFieldsTable(): selected AFTER td-fallback:', selectedAfterTd);
+        }
+      }
+    }catch{}
+    // Снимаем нативное выделение/фокус
+    try{ if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch{}
+    // Не перерисовываем весь раздел покупки, чтобы не сбрасывать поле "Ход"
   }catch{}
 }
 function saveBuy(){pushUndo();
@@ -9634,8 +10058,15 @@ function saveBuy(){pushUndo();
   }catch{}
   saveAll();showToast('Сделка сохранена');
   addHistory('Покупка', `${symbol} @ ${Math.round(price)} — <span style='color:#888'>${new Date().toLocaleTimeString()}</span>`);
-  $('#buySymbol').value='';
-  $('#buyPrice').value='';
+  // Табличный вид: после сохранения очистим название и курс, как делает крестик
+  try{
+    const symEl = document.getElementById('buySymbol');
+    const priceEl = document.getElementById('buyPrice');
+    if (symEl) symEl.value = '';
+    if (priceEl) priceEl.value = '';
+    try{ saveBuyTempFields(); }catch{}
+    try{ updateBuyHeaders(); }catch{}
+  }catch{}
   document.querySelectorAll('.buySum').forEach(inp=>inp.value='');
   localStorage.removeItem('cf_buyTemp');
   renderBuy();
@@ -9647,6 +10078,54 @@ function saveBuy(){pushUndo();
   // Обновляем заголовки после сохранения сделки
   setTimeout(() => updateBuyHeaders(), 0);
 }
+
+// Табличный вид: после сохранения сделки очищаем название и курс, как делает крестик
+try{
+  (function(){
+    const orig = window.saveBuyTable;
+    window.saveBuyTable = function(){
+      // Проверка названия акции перед сохранением в табличном виде
+      try{
+        const symEl = document.getElementById('buySymbol');
+        const symVal = (symEl && symEl.value ? symEl.value : '').trim();
+        if(!symVal){
+          if (typeof showToast === 'function') { try{ showToast('Укажите название акции'); }catch{} }
+          return;
+        }
+      }catch{}
+      try{ if (typeof orig === 'function') orig(); }catch{}
+      try{ clearBuyFieldsTable(); }catch{}
+    };
+  })();
+}catch{}
+// Делегирование: если кликнули по кнопке "Сохранить сделку" в покупке — после штатного сохранения очищаем поля (табличный вид)
+try{
+  document.addEventListener('click', function(e){
+    try{
+      const btn = e.target && (e.target.closest && e.target.closest('button'));
+      if(!btn) return;
+      const txt = (btn.textContent||'').trim();
+      if(!txt) return;
+      // Ищем именно кнопку сохранения сделки на вкладке покупки
+      if(/Сохранить\s+сделку/i.test(txt)){
+        // Предвалидация: если не указано название акции — блокируем сохранение
+        try{
+          const symEl = document.getElementById('buySymbol');
+          const symVal = (symEl && symEl.value ? symEl.value : '').trim();
+          if(!symVal){
+            if (typeof showToast === 'function') { try{ showToast('Укажите название акции'); }catch{} }
+            e.preventDefault && e.preventDefault();
+            e.stopPropagation && e.stopPropagation();
+            e.stopImmediatePropagation && e.stopImmediatePropagation();
+            return;
+          }
+        }catch{}
+        // Выполняем после исходного обработчика
+        setTimeout(function(){ try{ clearBuyFieldsTable(); }catch{} }, 0);
+      }
+    }catch{}
+  }, true);
+}catch{}
 // Продажа
 function renderSell(){
   const tbl=$('#sellTable');tbl.innerHTML='';
@@ -9997,7 +10476,7 @@ function updateSellCalc(){
       
       // Расчет "Акций чистых" (после вычета всех комиссий)
       const sharesAfterAllCommissionsCell = tr.querySelector('.sharesAfterAllCommissions');
-      if (sharesAfterAllCommissionsCell && price > 0 && qty > 0) {
+      if (sharesAfterAllCommissionsCell && qty > 0) {
         const totalCommissionPercent = Math.max(com, 0) + Math.max(cardCom, 0);
         const sharesAfterAllCommissions = qty * (1 - totalCommissionPercent / 100);
         sharesAfterAllCommissionsCell.textContent = sharesAfterAllCommissions > 0 ? fmt(sharesAfterAllCommissions) : '';
@@ -10937,16 +11416,47 @@ function saveBuyTempFields(){
   });
   localStorage.setItem('cf_buyTemp', JSON.stringify(temp));
 }
-function loadBuyTempFields(){
-  const temp = JSON.parse(localStorage.getItem('cf_buyTemp')||'{}');
-  if(temp.symbol!==undefined) $('#buySymbol').value = temp.symbol;
-  if(temp.price!==undefined) $('#buyPrice').value = temp.price;
-  if(temp.by) {
-    document.querySelectorAll('.buySum').forEach(inp=>{
-      if(temp.by[inp.dataset.p]!==undefined) inp.value = temp.by[inp.dataset.p];
-    });
-  }
-}
+ function loadBuyTempFields(){
+   console.log('CF DEBUG: loadBuyTempFields called');
+   // Если был явный сброс в табличном виде — не восстанавливаем временные поля
+   try{ 
+     const cleared = localStorage.getItem('cf_buyCleared');
+     console.log('CF DEBUG: loadBuyTempFields - cf_buyCleared flag:', cleared);
+     if (cleared === '1') {
+       console.log('CF DEBUG: loadBuyTempFields - skipping restore due to cleared flag');
+       // Дополнительно очищаем поля на всякий случай
+       const sym = document.getElementById('buySymbol');
+       const pr = document.getElementById('buyPrice');
+       if (sym) sym.value = '';
+       if (pr) pr.value = '';
+       return;
+     }
+   }catch{}
+   
+   // Дополнительная проверка - если поля уже пустые, не восстанавливаем
+   const sym = document.getElementById('buySymbol');
+   const pr = document.getElementById('buyPrice');
+   if (sym && sym.value === '' && pr && pr.value === '') {
+     console.log('CF DEBUG: loadBuyTempFields - fields already empty, skipping restore');
+     return;
+   }
+   
+   const temp = JSON.parse(localStorage.getItem('cf_buyTemp')||'{}');
+   console.log('CF DEBUG: loadBuyTempFields - temp data:', temp);
+   if(temp.symbol!==undefined) {
+     console.log('CF DEBUG: loadBuyTempFields - restoring symbol:', temp.symbol);
+     $('#buySymbol').value = temp.symbol;
+   }
+   if(temp.price!==undefined) {
+     console.log('CF DEBUG: loadBuyTempFields - restoring price:', temp.price);
+     $('#buyPrice').value = temp.price;
+   }
+   if(temp.by) {
+     document.querySelectorAll('.buySum').forEach(inp=>{
+       if(temp.by[inp.dataset.p]!==undefined) inp.value = temp.by[inp.dataset.p];
+     });
+   }
+ }
 // 3. Кнопка очистить поля
 function clearBuyFields(){
   $('#buySymbol').value = '';
@@ -13308,6 +13818,69 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
             }
           }
         }, true);
+  
+  // Крестик рядом с кнопкой "Сохранить сделку" — очищает только поля названия и цены (табличный вид)
+  document.addEventListener('click', function(e){
+    try{
+      const t = e.target;
+      if (!t) return;
+      if (t.id === 'clearBuyFieldsIcon') {
+        e.preventDefault();
+        e.stopPropagation();
+        try{ const symEl = document.getElementById('buySymbol'); if (symEl) symEl.value = ''; }catch{}
+        try{ const priceEl = document.getElementById('buyPrice'); if (priceEl) priceEl.value = ''; }catch{}
+        try{ if (typeof saveBuyTempFields === 'function') saveBuyTempFields(); }catch{}
+        try{ if (typeof updateBuyCalc === 'function') updateBuyCalc(); }catch{}
+        try{ if (typeof updateBuyHeaders === 'function') updateBuyHeaders(); }catch{}
+      }
+      if (t.id === 'clearBuyFieldsIconTable') {
+        e.preventDefault();
+        e.stopPropagation();
+        // Очищаем поля заголовка (символ и цена)
+        try{ const symEl = document.getElementById('buySymbol'); if (symEl) { symEl.value = ''; symEl.dispatchEvent(new Event('input', { bubbles: true })); } }catch{}
+        try{ const priceEl = document.getElementById('buyPrice'); if (priceEl) { priceEl.value = ''; priceEl.dispatchEvent(new Event('input', { bubbles: true })); } }catch{}
+        // Очищаем все значения внутри табличного интерфейса
+        try{
+          const container = document.getElementById('buyTableInterface');
+          if (container) {
+            container.querySelectorAll('input, select, textarea').forEach(el=>{
+              try{
+                if (el.tagName === 'INPUT') {
+                  const type = (el.type||'').toLowerCase();
+                  if (type === 'checkbox' || type === 'radio') {
+                    el.checked = false;
+                  } else {
+                    el.value = '';
+                  }
+                } else if (el.tagName === 'SELECT' || el.tagName === 'TEXTAREA') {
+                  el.value = '';
+                }
+                // Триггерим пересчет, если есть слушатели
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+              }catch{}
+            });
+            // Снимаем выделения/активные состояния с кнопок быстрых сумм и числовых кнопок 1–30
+            try{
+              container.querySelectorAll('button.active, button.selected, button.recommend, .active, .selected, .recommend').forEach(btn=>{
+                try{ btn.classList.remove('active','selected','recommend'); }catch{}
+                try{ if (btn.hasAttribute('aria-pressed')) btn.setAttribute('aria-pressed','false'); }catch{}
+              });
+            }catch{}
+          }
+        }catch{}
+        // На всякий случай очищаем возможные .buySum
+        try{ document.querySelectorAll('.buySum').forEach(inp=>{ inp.value=''; inp.dispatchEvent(new Event('input',{bubbles:true})); }); }catch{}
+        // Сохраняем временные поля и обновляем расчеты/заголовки
+        try{ if (typeof saveBuyTempFields === 'function') saveBuyTempFields(); }catch{}
+        try{ if (typeof updateBuyCalc === 'function') updateBuyCalc(); }catch{}
+        try{ if (typeof updateBuyHeaders === 'function') updateBuyHeaders(); }catch{}
+        // Лог в историю ходов
+        try{ if (typeof addTurnEventForCurrentTurn === 'function') addTurnEventForCurrentTurn(0, 'Очистка полей покупки (табличный вид)'); }catch{}
+        try{ if (typeof renderTurnsHistory === 'function') renderTurnsHistory(); }catch{}
+      }
+    }catch{}
+  }, true);
       }catch{}
 
       // Одноразовые флаги для тревог 3/2/1 сек
@@ -16166,6 +16739,33 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
     updateFinancialPanel();
   };
 
+  // Сброс ввода в табличном виде покупки: выбрать все нули, остальные снять
+  window.clearBuyFieldsTable = function(){
+    try{
+      const host = document.getElementById('buyTableInterface');
+      if (!host) return;
+      const inputs = Array.from(host.querySelectorAll('input'));
+      let firstSelected = null;
+      inputs.forEach(inp=>{
+        if (inp.disabled || inp.readOnly) return;
+        const type = (inp.getAttribute('type')||'').toLowerCase();
+        if (type && !['number','text'].includes(type)) return;
+        const raw = String(inp.value||'').trim();
+        const isZero = raw==='' || raw==='0' || raw==='0.0' || raw==='0,0';
+        if (isZero){
+          try{ inp.value = '0'; }catch{}
+          try{ inp.focus(); inp.select && inp.select(); }catch{}
+          if (!firstSelected) firstSelected = inp;
+        } else {
+          try{ inp.blur(); }catch{}
+        }
+      });
+      if (firstSelected){
+        try{ firstSelected.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); }catch{}
+      }
+    }catch{}
+  };
+
   // Функции для работы с модальным окном завершения хода
   function showFinishTurnModal(message) {
     const modal = document.getElementById('finishTurnModal');
@@ -18498,6 +19098,22 @@ function generateBuyTableInterface() {
   });
   html += '</tr>';
   
+  // ДОБАВЛЯЕМ строку с нулями (кнопка 0 для быстрого снятия выбора)
+  html += '<tr>';
+  participants.forEach((participant, index) => {
+    const buttonId0 = `buyTable_btn_${index}_0`;
+    html += `
+      <td id="${buttonId0}" 
+          onclick="selectBuyTableNumber(${index}, 0)" 
+          style="padding:6px;text-align:center;border:1px solid #ddd;cursor:pointer;background:#fff;transition:all 0.2s;font-size:12px;font-weight:bold;height:1.5em;"
+          onmouseover="this.style.background='#f0f0f0'" 
+          onmouseout="this.style.background=this.classList.contains('selected')?'#007bff':'#fff'">
+        0
+      </td>
+    `;
+  });
+  html += '</tr>';
+
   // Строки с числами от 1 до 30
   for (let i = 1; i <= 30; i++) {
     html += '<tr>';
@@ -18553,6 +19169,8 @@ function selectBuyTableNumber(participantIndex, number) {
   const participants = JSON.parse(localStorage.getItem('cf_participants') || '[]');
   const participantName = participants[participantIndex];
   
+  // Клик по 0 — это осознанный выбор 0
+
   // Сначала снимаем выделение со всех ячеек этого участника
   for (let i = 1; i <= 30; i++) {
     const cell = document.getElementById(`buyTable_btn_${participantIndex}_${i}`);
@@ -18562,6 +19180,9 @@ function selectBuyTableNumber(participantIndex, number) {
       cell.style.color = '#000';
     }
   }
+  // И отдельно снимаем возможное выделение у нулевой ячейки
+  const zeroCell = document.getElementById(`buyTable_btn_${participantIndex}_0`);
+  if (zeroCell) { zeroCell.classList.remove('selected'); zeroCell.style.background = '#fff'; zeroCell.style.color = '#000'; }
   
   // Получаем текущий выбор
   const storageKey = 'cf_buyTableSelections';
@@ -18572,7 +19193,7 @@ function selectBuyTableNumber(participantIndex, number) {
   }
   
   // Если уже выбрано это же число - убираем выбор
-  if (selections[participantName] === number) {
+  if (selections[participantName] === number && number !== 0) {
     selections[participantName] = null;
   } else {
     // Выбираем новое число
@@ -18944,8 +19565,13 @@ function saveBuyTable() {
 }
 
 function clearBuyFieldsTable() {
-  // Очищаем выборы в таблице
-  localStorage.removeItem('cf_buyTableSelections');
+  // Ставим для всех участников значение 0 (вместо удаления)
+  try {
+    const participants = JSON.parse(localStorage.getItem('cf_participants') || '[]');
+    const zeroMap = {};
+    participants.forEach(p => { zeroMap[p] = 0; });
+    localStorage.setItem('cf_buyTableSelections', JSON.stringify(zeroMap));
+  } catch {}
   
   // Очищаем поле хода
   const turnInput = document.getElementById('buyTurnInputTable');
@@ -18953,8 +19579,61 @@ function clearBuyFieldsTable() {
     turnInput.value = '';
   }
   
-  // Обновляем интерфейс
-  generateBuyTableInterface();
+  // Также очищаем символ и цену, как при сохранении
+  try {
+    const symbolInput = document.getElementById('buySymbol');
+    const priceInput = document.getElementById('buyPrice');
+    if (symbolInput) symbolInput.value = '';
+    if (priceInput) priceInput.value = '';
+  } catch {}
+  
+  // Снимаем выделение со всех ячеек (включая 0) и сбрасываем стили
+  try {
+    const container = document.getElementById('buyTableInterface');
+    if (container) {
+      const cells = container.querySelectorAll('td[id^="buyTable_btn_"]');
+      cells.forEach(cell => {
+        cell.classList.remove('selected');
+        cell.style.background = '#fff';
+        cell.style.color = '#000';
+      });
+      // Подсветим нулевые ячейки как выбранные (0)
+      const participants = JSON.parse(localStorage.getItem('cf_participants') || '[]');
+      participants.forEach((_, index) => {
+        const z = document.getElementById(`buyTable_btn_${index}_0`);
+        if (z) { z.classList.add('selected'); z.style.background = '#007bff'; z.style.color = '#fff'; }
+      });
+    }
+  } catch {}
+  
+  // Сбрасываем суммы/акции по участникам
+  try {
+    const participants = JSON.parse(localStorage.getItem('cf_participants') || '[]');
+    const ownerName = localStorage.getItem('cf_owner') || (participants[0] || '');
+    participants.forEach((p, idx) => {
+      const sumEl = document.getElementById(`buyTable_sum_${idx}`);
+      const sharesEl = document.getElementById(`buyTable_shares_${idx}`);
+      const netSharesEl = document.getElementById(`buyTable_netShares_${idx}`);
+      if (sumEl) sumEl.textContent = '0$';
+      if (sharesEl) sharesEl.textContent = '0 шт.';
+      if (netSharesEl) netSharesEl.textContent = (p === ownerName ? '—' : '0 шт.');
+    });
+  } catch {}
+  
+  // Обнуляем сводку над таблицей
+  try {
+    const summaryEl = document.getElementById('buyTableSummary');
+    if (summaryEl) summaryEl.textContent = 'Сумма: 0$ • Акций: 0 шт.';
+  } catch {}
+  
+  // Пересчитываем суммы по участникам и сводку без перегенерации DOM — теперь все нули
+  try {
+    const participants = JSON.parse(localStorage.getItem('cf_participants') || '[]');
+    participants.forEach((_, idx) => { try { updateBuyTableParticipantSum(idx); } catch {} });
+    updateBuyTableSummary();
+  } catch {}
+
+  // Перегенерировать интерфейс не требуется; оставляем текущую разметку
 }
 
 // Добавляем обработчики событий
@@ -19012,6 +19691,18 @@ function clearBuyFieldsTable() {
       } else {
         console.log('Table view is hidden');
       }
+    });
+  }
+  
+  // Явно навешиваем обработчик на крестик табличного вида,
+  // чтобы гарантированно вызывался сброс
+  const clearBtnTable = document.getElementById('clearBuyFieldsIconTable');
+  if (clearBtnTable && !clearBtnTable._wired) {
+    clearBtnTable._wired = true;
+    clearBtnTable.addEventListener('click', function(ev){
+      try { ev.preventDefault(); ev.stopPropagation(); } catch {}
+      try { clearBuyFieldsTable(); } catch {}
+      return false;
     });
   }
   
