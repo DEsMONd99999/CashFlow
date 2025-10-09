@@ -1,6 +1,35 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<!-- ====== APPLICATION VERSION (update on every change) ====== -->
+<script>
+window.APP = window.APP || {};
+APP.NAME = 'CashFlow Helper';
+APP.VERSION = 'V54.1';
+document.addEventListener('DOMContentLoaded', function() {
+var bar = document.querySelector('.top-dev-bar');
+if (bar) {
+var hasLink = bar.querySelector('a');
+if (!hasLink) {
+bar.textContent = APP.NAME + ' ' + APP.VERSION + ' от ';
+} else {
+var textNodeFound = false;
+Array.from(bar.childNodes).forEach(function(node){
+if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()){
+node.textContent = APP.NAME + ' ' + APP.VERSION + ' от ';
+textNodeFound = true;
+}
+});
+if (!textNodeFound) {
+var span = document.createElement('span');
+span.textContent = APP.NAME + ' ' + APP.VERSION + ' от ';
+bar.insertBefore(span, bar.firstChild);
+}
+}
+}
+});
+</script>
+<!-- ====== /APPLICATION VERSION ====== -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -31,9 +60,9 @@ input[type=number],input[type=text],textarea{width:100%;box-sizing:border-box;pa
     margin-top: 4px !important;
   }
   #buySymbolTpls span, #buyPriceTpls span {
-    font-size: 12px !important;
-    padding: 3px 8px !important;
-    margin: 1px !important;
+    font-size: 14px !important;
+    padding: 6px 12px !important;
+    margin: 3px !important;
   }
 }
 .partner-money>div{margin:0 !important}
@@ -2279,6 +2308,7 @@ button:focus,button:focus-visible,.btn:focus,.btn:focus-visible{outline:none !im
         <button id="editUnionBtn" class="btn" onclick="editAllUnions()" title="Редактировать союзы" style="background:#007bff;padding:8px 16px;font-size:16px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center">✏️</button>
         <button id="viewHistoryBtn" class="btn" onclick="viewUnionHistory()" title="Просмотр истории союзов" style="background:#6c757d;padding:8px 16px;font-size:16px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center">📋</button>
         <button id="addUnionBtn" class="btn" onclick="addUnion()" style="background:#28a745;padding:8px 16px;font-size:18px;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center">+</button>
+        <button id="deleteUnionsBtn" class="btn" onclick="deleteAllUnions()" title="Удалить все союзы" style="background:#c33;padding:8px 10px;font-size:12px;border-radius:6px;width:auto;height:36px;display:flex;align-items:center;justify-content:center">Удалить союзы</button>
       </div>
     </h3>
     
@@ -2298,6 +2328,41 @@ button:focus,button:focus-visible,.btn:focus,.btn:focus-visible{outline:none !im
   
 
 </section>
+<script>
+// Удаление всех союзов по паролю
+function deleteAllUnions(){
+  try{
+    const pwd = prompt('Введите пароль для удаления союзов:');
+    if (pwd === null) return; // отмена
+    const CORRECT = '0000';
+    if (pwd !== CORRECT) { alert('Неверный пароль'); return; }
+    try { pushUndo && pushUndo(); } catch {}
+    // Удаляем возможные ключи localStorage, связанные с союзами
+    try {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        if (k === 'cf_unions' || k === 'cf_unionHistory' || /^cf_union/i.test(k)) keys.push(k);
+      }
+      keys.forEach(k => localStorage.removeItem(k));
+    } catch (e) { console.warn('Ошибка очистки ключей союзов из localStorage', e); }
+    // Пытаемся обнулить переменные в рантайме, если есть
+    try { if (typeof unions !== 'undefined') unions = []; } catch {}
+    try { if (typeof unionHistory !== 'undefined') unionHistory = []; } catch {}
+    // Чистим контейнер в UI
+    try {
+      const host = document.getElementById('unionsContainer');
+      if (host) host.innerHTML = '';
+    } catch {}
+    // Перерисовываем раздел, если есть функция рендера
+    try { if (typeof renderUnions === 'function') renderUnions(); } catch {}
+    try { showToast && showToast('Союзы удалены'); } catch { alert('Союзы удалены'); }
+  } catch(e){
+    alert('Ошибка при удалении союзов: ' + (e && e.message ? e.message : e));
+  }
+}
+</script>
 <script>
 // Фикс порядка элементов в блоках Союза: [подпись] → [имя] → [статус]
 (function(){
@@ -6000,7 +6065,7 @@ function addIncomeRow(){
   const amount = parseFloat(document.getElementById('incomeAmount').value)||0;
   const invest = parseFloat(document.getElementById('incomeInvest').value)||0;
   const price = parseFloat(document.getElementById('incomePrice')?.value)||0;
-  if(amount<=0){ showToast('Укажите сумму дохода'); return; }
+  if(amount===0){ showToast('Укажите сумму дохода'); return; }
   
   // Проверяем, достаточно ли денег для инвестиций
   const investNum = Math.round(invest||0);
@@ -9579,12 +9644,81 @@ function renderBuyTemplates(){
   let wrap = document.getElementById('buySymbolTpls');
   if(!wrap){wrap=document.createElement('div');wrap.id='buySymbolTpls';$('#buySymbol').insertAdjacentElement('afterend',wrap);}
   wrap.style.display='inline-block';
-  wrap.innerHTML = buySymbolTpls.map((s,i)=>`<span style="background:#e6f0ff;padding:4px 10px;border-radius:12px;margin:2px;display:inline-block;cursor:pointer;position:relative" onclick="setFieldValue('buySymbol','${s}')">${s} <button tabindex="-1" onclick="event.stopPropagation();confirmDelBuySymbolTpl(${i})" style="background:none;border:none;color:#bbb;font-size:12px;margin-left:4px;opacity:0.5;vertical-align:middle;pointer-events:auto;border-radius:50%;width:20px;height:20px;line-height:16px;display:inline-flex;align-items:center;justify-content:center;outline:none;">✖</button></span>`).join('');
+  wrap.innerHTML = buySymbolTpls.map((s)=>`<span class="buy-tpl" data-type="symbol" data-value="${s}" style="background:#e6f0ff;padding:6px 14px;border-radius:14px;margin:3px;display:inline-block;cursor:pointer;position:relative;font-size:14px;">${s}</span>`).join('');
   // Цены
   let wrap2 = document.getElementById('buyPriceTpls');
   if(!wrap2){wrap2=document.createElement('div');wrap2.id='buyPriceTpls';$('#buyPrice').insertAdjacentElement('afterend',wrap2);}
   wrap2.style.display='inline-block';
-  wrap2.innerHTML = buyPriceTpls.map((s,i)=>`<span style="background:#e6f0ff;padding:4px 10px;border-radius:12px;margin:2px;display:inline-block;cursor:pointer;position:relative" onclick="setFieldValue('buyPrice','${s}')">${s} <button tabindex="-1" onclick="event.stopPropagation();confirmDelBuyPriceTpl(${i})" style="background:none;border:none;color:#bbb;font-size:12px;margin-left:4px;opacity:0.5;vertical-align:middle;pointer-events:auto;border-radius:50%;width:20px;height:20px;line-height:16px;display:inline-flex;align-items:center;justify-content:center;outline:none;">✖</button></span>`).join('');
+  wrap2.innerHTML = buyPriceTpls.map((s)=>`<span class="buy-tpl" data-type="price" data-value="${s}" style="background:#e6f0ff;padding:6px 14px;border-radius:14px;margin:3px;display:inline-block;cursor:pointer;position:relative;font-size:14px;">${s}</span>`).join('');
+
+  // Единый крестик-редактор шаблонов
+  try{
+    let ctrl = document.getElementById('buyTplsControls');
+    if (!ctrl){
+      ctrl = document.createElement('div');
+      ctrl.id = 'buyTplsControls';
+      ctrl.style.cssText = 'display:inline-flex;gap:8px;align-items:center;margin:4px 0 0 4px;vertical-align:middle;';
+      const editBtn = document.createElement('button');
+      editBtn.id = 'buyTplsEditBtn';
+      editBtn.className = 'actBtn';
+      editBtn.title = 'Редактировать шаблоны';
+      editBtn.textContent = '✖';
+      editBtn.onclick = function(){ try{ toggleBuyTplsEdit(); }catch{} };
+      const delBtn = document.createElement('button');
+      delBtn.id = 'buyTplsDeleteBtn';
+      delBtn.className = 'btn';
+      delBtn.textContent = 'Удалить выбранные';
+      delBtn.style.display = 'none';
+      delBtn.onclick = function(){ try{ deleteSelectedBuyTpls(); }catch{} };
+      ctrl.appendChild(editBtn);
+      ctrl.appendChild(delBtn);
+      // Вставляем контрол после контейнера цен (wrap2), иначе после названий (wrap)
+      if (wrap2 && wrap2.parentNode){ wrap2.parentNode.insertBefore(ctrl, wrap2.nextSibling); }
+      else if (wrap && wrap.parentNode){ wrap.parentNode.insertBefore(ctrl, wrap.nextSibling); }
+    } else {
+      // Обновим видимость кнопки удаления в зависимости от режима
+      const delBtn = document.getElementById('buyTplsDeleteBtn');
+      if (delBtn) delBtn.style.display = (window._buyTplsEdit===true) ? '' : 'none';
+      // Гарантируем позицию: контрол после шаблонов курса
+      try{
+        if (wrap2 && wrap2.parentNode){ wrap2.parentNode.insertBefore(ctrl, wrap2.nextSibling); }
+        else if (wrap && wrap.parentNode){ wrap.parentNode.insertBefore(ctrl, wrap.nextSibling); }
+      }catch{}
+    }
+  }catch{}
+
+  // Делегирование кликов по шаблонам: режим выбора/обычный режим
+  try{
+    const hostClick = function(e){
+      const t = e.target;
+      if (!t || !t.classList || !t.classList.contains('buy-tpl')) return;
+      const isEdit = !!window._buyTplsEdit;
+      const type = t.getAttribute('data-type');
+      const val = t.getAttribute('data-value') || '';
+      if (isEdit){
+        // Переключаем выделение
+        const sel = t.getAttribute('data-selected') === '1';
+        if (sel){
+          t.removeAttribute('data-selected');
+          t.style.outline = '';
+          t.style.background = '#e6f0ff';
+        } else {
+          t.setAttribute('data-selected','1');
+          t.style.outline = '2px solid #f6b3b3';
+          t.style.background = '#ffe6e6';
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      // Обычный режим — проставляем значение в поле
+      if (type === 'symbol'){ try{ setFieldValue('buySymbol', val); }catch{} }
+      if (type === 'price'){ try{ setFieldValue('buyPrice', val); }catch{} }
+    };
+    // Снимаем старые и вешаем новые для обоих контейнеров
+    wrap && (wrap.onclick = hostClick);
+    wrap2 && (wrap2.onclick = hostClick);
+  }catch{}
 }
 function confirmDelBuySymbolTpl(i){if(confirm('Удалить этот шаблон?')) delBuySymbolTpl(i);}
 function confirmDelBuyPriceTpl(i){if(confirm('Удалить этот шаблон?')) delBuyPriceTpl(i);}
@@ -9602,6 +9736,47 @@ $('#buyPrice').addEventListener('change',()=>{
 });
 // При старте отрисуем шаблоны покупки сразу, чтобы не пропадали после обновления
 setTimeout(()=>{ try{ renderBuyTemplates(); }catch{} }, 0);
+// Режим редактирования шаблонов покупки (единый крестик)
+function toggleBuyTplsEdit(){
+  try{
+    window._buyTplsEdit = !window._buyTplsEdit;
+    const btn = document.getElementById('buyTplsEditBtn');
+    const del = document.getElementById('buyTplsDeleteBtn');
+    if (btn){ btn.style.color = window._buyTplsEdit ? '#c33' : '#888'; }
+    if (del){ del.style.display = window._buyTplsEdit ? '' : 'none'; }
+    // Сброс/очистка выделения при выходе из режима
+    if (!window._buyTplsEdit){
+      document.querySelectorAll('#buySymbolTpls .buy-tpl, #buyPriceTpls .buy-tpl').forEach(el=>{
+        try{ el.removeAttribute('data-selected'); el.style.outline=''; el.style.background = '#e6f0ff'; }catch{}
+      });
+    }
+  }catch{}
+}
+function deleteSelectedBuyTpls(){
+  try{
+    const selected = Array.from(document.querySelectorAll('#buySymbolTpls .buy-tpl[data-selected="1"], #buyPriceTpls .buy-tpl[data-selected="1"]'));
+    if (!selected.length){ if (typeof showToast==='function') showToast('Не выбрано шаблонов'); return; }
+    if (!confirm('Удалить выбранные шаблоны?')) return;
+    let changed = false;
+    selected.forEach(el=>{
+      const type = el.getAttribute('data-type');
+      const val = el.getAttribute('data-value')||'';
+      if (type === 'symbol'){
+        const idx = buySymbolTpls.indexOf(val);
+        if (idx >= 0){ buySymbolTpls.splice(idx,1); changed = true; }
+      } else if (type === 'price'){
+        const idx2 = buyPriceTpls.indexOf(val);
+        if (idx2 >= 0){ buyPriceTpls.splice(idx2,1); changed = true; }
+      }
+    });
+    if (changed){
+      LS.save('cf_buySymbolTpls', buySymbolTpls);
+      LS.save('cf_buyPriceTpls', buyPriceTpls);
+      renderBuyTemplates();
+      if (typeof showToast==='function') showToast('Шаблоны удалены');
+    }
+  }catch{}
+}
   // Управление видимостью полей в форме добавления дохода
   try {
     const catSel = document.getElementById('incomeCategory');
@@ -17600,7 +17775,7 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
   
   function handlePassword(unionId) {
     const input = document.getElementById(`password-${unionId}`);
-    if (input.value === '1111') {
+    if (input.value === '0000') {
       // Скрываем поле пароля
       const passwordDiv = document.getElementById(`union-${unionId}-password`);
       if (passwordDiv) {
@@ -17679,7 +17854,7 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
   
   function handlePasswordAgreement(unionId) {
     const input = document.getElementById(`password-agreement-${unionId}`);
-    if (input.value === '1111') {
+    if (input.value === '0000') {
       addToSequence(unionId, 'password_agreement', 'correct');
       // Скрываем поле пароля
       const passwordDiv = document.getElementById(`union-${unionId}-password-agreement`);
@@ -17801,7 +17976,7 @@ setTimeout(()=>{ try { renderErrorHistory(); } catch {} }, 0);
   
   function handlePasswordFinal(unionId) {
     const input = document.getElementById(`password-final-${unionId}`);
-    if (input.value === '1111') {
+    if (input.value === '0000') {
       addToSequence(unionId, 'password_final', 'correct');
       // Скрываем поле пароля
       const passwordDiv = document.getElementById(`union-${unionId}-password-final`);
@@ -18373,7 +18548,7 @@ ${concluded ? `<div class=\"block\"><div class=\"ok\" style=\"font-weight:600\">
   
   function editAllUnions() {
     const password = prompt('Введите пароль для редактирования всех союзов:');
-    if (password !== '1111') {
+    if (password !== '0000') {
       alert('Неверный пароль!');
       return;
     }
@@ -18435,7 +18610,7 @@ ${concluded ? `<div class=\"block\"><div class=\"ok\" style=\"font-weight:600\">
   
   function editUnion(unionId) {
     const password = prompt('Введите пароль для редактирования:');
-    if (password !== '1111') {
+    if (password !== '0000') {
       alert('Неверный пароль!');
       return;
     }
@@ -18498,16 +18673,43 @@ ${concluded ? `<div class=\"block\"><div class=\"ok\" style=\"font-weight:600\">
   
   function deleteUnion(unionId) {
     const password = prompt('Введите пароль для удаления союза:');
-    if (password !== '1111') {
+    if (password !== '0000') {
       alert('Неверный пароль!');
       return;
     }
     
     if (confirm('Вы уверены, что хотите удалить этот союз?')) {
-      const unionElement = document.getElementById(`union-${unionId}`);
-      if (unionElement) {
-        unionElement.remove();
-      }
+      // 1) Удаляем из DOM
+      try {
+        const unionElement = document.getElementById(`union-${unionId}`);
+        if (unionElement) unionElement.remove();
+      } catch {}
+
+      // 2) Удаляем из памяти и localStorage, чтобы не восстановился после перезагрузки
+      try {
+        if (Array.isArray(unions)) {
+          const beforeLen = unions.length;
+          unions = unions.filter(u => !(u && (u.id === unionId || String(u.id) === String(unionId))));
+          if (typeof saveUnions === 'function' && unions.length !== beforeLen) {
+            saveUnions();
+          } else {
+            // Фолбэк: напрямую правим cf_unions
+            try {
+              localStorage.setItem('cf_unions', JSON.stringify(unions));
+            } catch {}
+          }
+        } else {
+          // Если глобального массива нет — работаем напрямую с cf_unions
+          try {
+            const list = JSON.parse(localStorage.getItem('cf_unions')||'[]');
+            const filtered = Array.isArray(list) ? list.filter(u => !(u && (u.id === unionId || String(u.id) === String(unionId)))) : [];
+            localStorage.setItem('cf_unions', JSON.stringify(filtered));
+          } catch {}
+        }
+      } catch {}
+
+      // 3) Сообщение
+      try { showToast && showToast('Союз удалён'); } catch {}
     }
   }
   
